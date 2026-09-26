@@ -35,11 +35,11 @@ Arvn:CreateWindow({
 
 ## Themes
 
-Built in: Midnight, Graphite, Abyss, Forest, Orchid, Ember, Blush and Porcelain.
+Built in: Dark, Gray, Blue, Green, Purple, Orange, Pink and Light.
 
 ```lua
-Arvn:CreateWindow({Title = "My Script", Theme = "Abyss"})
-Arvn.Theme:Set("Forest")
+Arvn:CreateWindow({Title = "My Script", Theme = "Blue"})
+Arvn.Theme:Set("Green")
 ```
 
 Make your own:
@@ -55,6 +55,8 @@ Arvn.Theme:Set("Ocean")
 ```
 
 Colors you leave out are worked out from the others.
+
+Players can also make their own theme in Settings > Theme > Colors. Changing any color there switches the menu to the Custom theme.
 
 Change one color on the current theme:
 

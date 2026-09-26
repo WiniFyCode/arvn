@@ -112,7 +112,8 @@ Every window comes with:
 
 - Settings pages: Interface, Theme, Overlays, Personalize, Sounds and Configs
 - a watermark and a keybind list
-- search, notifications and autosave
+- a UI button on screen that opens and closes the menu
+- search, notifications, sounds and autosave
 
 Turn any of them off:
 
@@ -121,10 +122,15 @@ Arvn:CreateWindow({
 	Title = "My Script",
 	Watermark = false,
 	Keybinds = false,
+	UIButton = false,
 	Search = false,
+	Sounds = false,
+	Notifications = false,
 	Pages = {Personalize = false, Sounds = false},
 })
 ```
+
+Players can turn them back on in Settings. Their choice is saved.
 
 Three optional pages can be turned on: `Dashboard = true`, `Server = true` and `Tools = true`.
 
@@ -147,6 +153,21 @@ Arvn:CreateWindow({
 - `Get Key` copies `Link`.
 - A correct key is saved, so the player only enters it once. Set `SaveKey = false` to ask every time.
 - To check keys yourself, use `Check = function(key) return key == "abc" end` instead of `Keys`.
+
+## Reset
+
+Settings > Configs has two buttons:
+
+- **Reset Settings** puts every option back to default and keeps configs.
+- **Reset Everything** also deletes everything saved in the script's `Folder`: configs, autosave, window position and pictures.
+
+You don't need to write any code for this. If your script saves its own files, clean them up with `OnReset`:
+
+```lua
+Arvn:OnReset(function()
+	delfile("MyScript/stats.json")
+end)
+```
 
 ## Credits
 

@@ -17,6 +17,7 @@
 | `Arvn:Loop(fn, seconds)` | a loop that stops on eject; returns a stop function |
 | `Arvn:Track(instance)` | destroyed on eject |
 | `Arvn:OnEject(fn)` | runs on eject |
+| `Arvn:OnReset(fn)` | runs when a player uses Reset Everything |
 | `Arvn:SetWatermark({Text, Visible})` | watermark text and visibility |
 | `Arvn:AddWatermarkPart(key, {Icon, Get})` | adds a live value to the watermark |
 | `Arvn:AddFont(name, family)` | adds a menu font |
@@ -28,7 +29,7 @@
 |---|---|
 | `Arvn.Flags` | every value; setting one updates the menu |
 | `Arvn.Theme` | `Register`, `Set`, `Get`, `List`, `SetColor`, `ResetColor`, `Bind`, `Export`, `Import`, `OnChanged` |
-| `Arvn.Config` | `Save`, `Load`, `Delete`, `List`, `SetAutoload`, `Export`, `Import`, `Set`, `Get` |
+| `Arvn.Config` | `Save`, `Load`, `Delete`, `List`, `SetAutoload`, `Export`, `Import`, `Set`, `Get`, `ResetAll` |
 | `Arvn.Errors` | errors from your callbacks; they are never printed |
 
 ## CreateWindow options
@@ -38,13 +39,14 @@
 | `Title`, `Subtitle`, `Author`, `Version`, `Credits`, `Logo` | `"arvn"`, none, none, none, none, none |
 | `Folder`, `SubFolder` | `"arvn"`, none |
 | `MenuKey` | `"RightShift"` |
-| `Theme`, `Accent`, `Colors` | `"Midnight"` |
+| `Theme`, `Accent`, `Colors` | `"Dark"` |
 | `Width`, `Height`, `SidebarWidth`, `Resizable` | `880`, `640`, `188`, `true` |
 | `Font`, `Scale`, `ToggleStyle` | `"BuilderSans"`, `100`, `"Switch"` |
 | `Blur`, `Particles`, `Background` | `true`, `"Snow"`, none |
 | `Watermark`, `WatermarkText`, `Keybinds`, `Keystrokes` | `true`, the title, `true`, `false` |
 | `Search`, `OpenOnLoad`, `LoadNotification` | `true`, `true`, `true` |
-| `NotifySide`, `MobileButton` | `"Top Right"`, auto |
+| `NotifySide`, `Notifications`, `Sounds` | `"Top Right"`, `true`, `true` |
+| `UIButton` | `true`; `false` hides it, `{Icon, Text}` changes it |
 | `Dashboard`, `Server`, `Tools` | off |
 | `KeySystem` | none; `{Title, Note, Keys, Check, Link, SaveKey}` |
 | `Groups`, `Pages` | built-in names |

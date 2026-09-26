@@ -184,7 +184,7 @@ D.FONTS_TEXT = {
 	"Kalam", "Merriweather", "PatrickHand", "PermanentMarker", "SpecialElite", "AmaticSC", "SourceSans", "SourceSansBold",
 }
 D.SOUND_NAMES = {"None", "Soft", "Tick", "Click", "Pop", "Bubble", "Glass", "Mech", "Switch", "Chime", "Ping", "Bell", "Swoosh", "Drop"}
-D.THEME_NAMES = {"Midnight", "Graphite", "Abyss", "Forest", "Orchid", "Ember", "Blush", "Porcelain", "Custom"}
+D.THEME_NAMES = {"Dark", "Gray", "Blue", "Green", "Purple", "Orange", "Pink", "Light", "Custom"}
 D.GROUPS = {{"enemy", "Enemies"}, {"team", "Teammates"}, {"npc", "NPCs"}}
 D.EXTRA_DEFS = {tm_roles = {}, vis_group = "enemy", prev_spin = true, prev_speed = 35}
 
@@ -566,17 +566,17 @@ local NAV_ALL = {
 			{
 				{title = "Menu", rows = {
 					key("ui_menukey", "Menu Key", "Key that opens and closes the menu.", "RightShift"),
-					drop("ui_menumode", "Menu Mode", "Toggle on press, or show only while held.", {"Toggle", "Hold"}, "Toggle"),
+					drop("ui_menumode", "Key Mode", "Press to open and close, or hold to keep it open.", {"Toggle", "Hold"}, "Toggle"),
 					toggle("ui_openload", "Open On Load", "Show the menu when the script starts.", {def = true, nobind = true}),
 					toggle("ui_escclose", "Close With Escape", "Escape closes the menu when no popup is open.", {nobind = true}),
 					toggle("ui_remember", "Remember Page", "Reopen on the page you left.", {def = true, nobind = true}),
 					drop("ui_cursor", "Menu Cursor", "Cursor used while the menu is open.", {"System", "Dot"}, "System"),
-					drop("ui_mobile", "Touch Button", "Floating button that opens the menu on touch screens.", {"Auto", "Always", "Off"}, "Auto"),
+					toggle("ui_button", "UI Button", "A small button on screen that opens and closes the menu.", {def = true, nobind = true}),
 				}},
 				{title = "Layout", rows = {
-					slider("ui_scale", "UI Scale", "Size of the whole menu. Applies when you release.", 75, 130, 100, {suf = "%", commit = true}),
-					drop("ui_density", "Density", "Row spacing.", {"Comfortable", "Compact"}, "Comfortable"),
-					slider("ui_radius", "Corner Radius", "Roundness of every surface.", 4, 20, 14, {commit = true}),
+					slider("ui_scale", "Size", "Size of the whole menu. Applies when you let go.", 75, 130, 100, {suf = "%", commit = true}),
+					drop("ui_density", "Spacing", "Space between rows.", {"Comfortable", "Compact"}, "Comfortable"),
+					slider("ui_radius", "Roundness", "How round the corners are.", 4, 20, 14, {commit = true}),
 					drop("ui_font", "Font", "Font used by the menu.", D.FONTS_UI, "BuilderSans"),
 					drop("ui_toggle", "Switch Style", "Look of every on/off control.", {"Switch", "Square", "Checkbox"}, "Switch"),
 				}},
@@ -587,8 +587,8 @@ local NAV_ALL = {
 					slider("ui_tip_delay", "Tooltip Delay", "Hover time before a tooltip appears.", 0.2, 1.5, 0.6, {step = 0.05, suf = "s"}),
 					toggle("ui_anim", "Animations", "Animate transitions.", {def = true, nobind = true}),
 					slider("ui_anim_speed", "Animation Speed", "Speed of every transition.", 50, 200, 100, {suf = "%"}),
-					drop("ui_bindnotify", "Toggle Alerts", "Notify when a feature changes state.", {"Off", "Keybinds Only", "Always"}, "Keybinds Only"),
-					toggle("ui_confirm", "Confirm Risky Actions", "Require a second click to eject or reset.", {def = true, nobind = true}),
+					drop("ui_bindnotify", "On/Off Alerts", "Show a message when something turns on or off.", {"Off", "Keybinds Only", "Always"}, "Keybinds Only"),
+					toggle("ui_confirm", "Ask Before Eject", "Click twice to eject or reset.", {def = true, nobind = true}),
 				}},
 				{title = "About", protected = true, rows = {
 					info("i_script", "Script", "Name of this script.", ""),
@@ -598,7 +598,7 @@ local NAV_ALL = {
 					button("act_lib_link", "arvn lib on GitHub", "Copy the link to arvn lib.", {icon = "external-link", protected = true, nobind = true}),
 				}},
 				{title = "Window", rows = {
-					button("act_reset_pos", "Reset Window Position", "Center the menu on screen.", {icon = "move"}),
+					button("act_reset_pos", "Center Window", "Move the menu back to the middle of the screen.", {icon = "move"}),
 					button("act_eject", "Eject", "Unload the menu and everything it created.", {icon = "log-out", danger = true, confirm = true}),
 				}},
 			},
@@ -606,30 +606,29 @@ local NAV_ALL = {
 		{id = "set_theme", name = "Theme", icon = "palette", page = {
 			{
 				{title = "Theme", rows = {
-					drop("ui_theme", "Preset", "Full color palette for the menu.", D.THEME_NAMES, "Midnight"),
-					color("ui_accent", "Accent", "Highlight color for toggles, sliders and selection.", "#E0313DFF"),
-					toggle("ui_accent_sync", "Preset Accent", "Presets also set their own accent.", {def = true, nobind = true}),
+					drop("ui_theme", "Theme", "Colors of the whole menu.", D.THEME_NAMES, "Dark"),
+					color("ui_accent", "Accent", "Color of switches, sliders and highlights.", "#E0313DFF"),
+					toggle("ui_accent_sync", "Theme Accent", "Picking a theme also picks its accent.", {def = true, nobind = true}),
 				}},
-				{title = "Custom Palette", rows = {
-					color("pal_win", "Window", "Outer window color.", "#111113FF"),
-					color("pal_panel", "Panel", "Content panel color.", "#1A1A1DFF"),
-					color("pal_card", "Cards", "Card color.", "#222226FF"),
-					color("pal_text", "Text", "Primary text color.", "#EEEEF0FF"),
-					color("pal_sub", "Muted Text", "Secondary text color.", "#909098FF"),
-					button("act_pal_copy", "Copy Current Preset", "Start the custom palette from the active preset.", {icon = "copy"}),
+				{title = "Colors", rows = {
+					color("pal_win", "Background", "Change any color to make your own theme.", "#111113FF"),
+					color("pal_panel", "Panel", "Change any color to make your own theme.", "#1A1A1DFF"),
+					color("pal_card", "Cards", "Change any color to make your own theme.", "#222226FF"),
+					color("pal_text", "Text", "Change any color to make your own theme.", "#EEEEF0FF"),
+					color("pal_sub", "Muted Text", "Change any color to make your own theme.", "#909098FF"),
 				}},
 			},
 			{
 				{title = "Glass", rows = {
-					toggle("ui_glass", "Glass", "Let the game show through the menu.", {def = true, nobind = true}),
+					toggle("ui_glass", "See-Through", "Let the game show through the menu.", {def = true, nobind = true}),
 					slider("ui_glass_amt", "Transparency", "How see-through the glass is.", 0, 100, 45, {suf = "%"}),
 					toggle("ui_rim", "Edge Light", "Bright top edge on every surface.", {def = true, nobind = true}),
 				}},
-				{title = "Backdrop", rows = {
-					toggle("ui_blur", "Blur", "Blur the game behind the menu.", {def = true, nobind = true}),
-					slider("ui_blur_size", "Blur Strength", "Blur radius.", 4, 56, 24),
-					toggle("ui_dim", "Dim", "Darken the game behind the menu.", {def = true, nobind = true}),
-					slider("ui_dim_amt", "Dim Amount", "How dark the backdrop gets.", 0, 85, 40, {suf = "%"}),
+				{title = "Behind The Menu", rows = {
+					toggle("ui_blur", "Blur", "Blur the game while the menu is open.", {def = true, nobind = true}),
+					slider("ui_blur_size", "Blur Strength", "How strong the blur is.", 4, 56, 24),
+					toggle("ui_dim", "Darken", "Darken the game while the menu is open.", {def = true, nobind = true}),
+					slider("ui_dim_amt", "Darken Amount", "How dark it gets.", 0, 85, 40, {suf = "%"}),
 				}},
 				{title = "Particles", rows = {
 					drop("fx_style", "Style", "Ambient particles behind the menu.", {"Snow", "Sparkles", "Dust", "Off"}, "Snow"),
@@ -653,9 +652,9 @@ local NAV_ALL = {
 					toggle("wm_time", "Clock", "Show the local time.", {nobind = true}),
 					toggle("wm_user", "Account", "Show your name and avatar.", {def = true, nobind = true}),
 				}},
-				{title = "Active Binds", rows = {
+				{title = "Keybind List", rows = {
 					toggle("ov_kb", "Enabled", "Floating panel with your bound keys and their state.", {def = true}),
-					toggle("kb_inactive", "Show Idle Binds", "Also list binds that are currently off.", {def = true, nobind = true}),
+					toggle("kb_inactive", "Show Inactive", "Also list keybinds that are off.", {def = true, nobind = true}),
 					toggle("kb_hideempty", "Hide When Empty", "Hide the panel when it has nothing to show.", {nobind = true}),
 				}},
 			},
@@ -672,7 +671,7 @@ local NAV_ALL = {
 					drop("nt_pos", "Position", "Screen corner for notifications.", {"Top Right", "Top Center", "Top Left", "Bottom Right", "Bottom Center", "Bottom Left"}, "Top Right"),
 					slider("nt_dur", "Duration", "Seconds each notification stays.", 1, 10, 4, {step = 0.5, suf = "s"}),
 					drop("nt_style", "Style", "Full cards or slim pills.", {"Card", "Compact"}, "Card"),
-					slider("nt_max", "Max Visible", "Most notifications shown at once.", 1, 8, 5),
+					slider("nt_max", "Max On Screen", "Most notifications shown at once.", 1, 8, 5),
 				}},
 				{title = "Layout", rows = {
 					toggle("ov_lock", "Lock Positions", "Stop overlays from being dragged.", {nobind = true}),
@@ -705,10 +704,10 @@ local NAV_ALL = {
 		}},
 		{id = "set_sounds", name = "Sounds", icon = "volume-2", page = {
 			{
-				{title = "Output", rows = {
-					toggle("snd_on", "Sounds", "Play interface sounds.", {def = true, nobind = true}),
-					slider("snd_vol", "Volume", "Interface volume.", 0, 100, 55, {suf = "%"}),
-					toggle("snd_pitch", "Pitch Variation", "Slightly vary pitch so repeats sound natural.", {def = true, nobind = true}),
+				{title = "Sound", rows = {
+					toggle("snd_on", "Sounds", "Play menu sounds.", {def = true, nobind = true}),
+					slider("snd_vol", "Volume", "How loud menu sounds are.", 0, 100, 55, {suf = "%"}),
+					toggle("snd_pitch", "Vary Pitch", "Slightly change the pitch so repeats sound natural.", {def = true, nobind = true}),
 				}},
 				{title = "Interface", rows = {
 					drop("snd_click", "Click", "Sound for buttons and rows.", D.SOUND_NAMES, "Soft", {preview = true}),
@@ -748,7 +747,8 @@ local NAV_ALL = {
 					button("act_cfg_import", "Import Code", "Apply the pasted code, or the clipboard.", {icon = "download"}),
 				}},
 				{title = "Reset", rows = {
-					button("act_reset_all", "Reset All Settings", "Restore every option to its default.", {icon = "rotate-ccw", danger = true, confirm = true}),
+					button("act_reset_all", "Reset Settings", "Every option back to default. Configs are kept.", {icon = "rotate-ccw", danger = true, confirm = true}),
+					button("act_reset_everything", "Reset Everything", "Every option back to default and all saved data deleted.", {icon = "trash-2", danger = true}),
 				}},
 			},
 		}},
@@ -1261,9 +1261,12 @@ function D.applySnapshot(data)
 	for k, v in pairs(data) do
 		if k ~= "__binds" and string.sub(k, 1, 2) ~= "__" then D.SAVED[k] = D.clone(v) end
 	end
+	D.bulk = true
 	for k, v in pairs(data) do
-		if DEF[k] ~= nil and not NOSAVE[k] and type(v) == type(DEF[k]) and validKey(k, v) then D.set(k, D.clone(v)) end
+		if DEF[k] ~= nil and not NOSAVE[k] and type(v) == type(DEF[k]) and validKey(k, v) then pcall(D.set, k, D.clone(v)) end
 	end
+	D.bulk = false
+	D.fire("ui_theme")
 	if type(data.__binds) == "table" then
 		for f, x in pairs(data.__binds) do
 			if type(x) == "table" and type(x[1]) == "string" then
@@ -1397,16 +1400,23 @@ D.validKey = validKey
 end
 do
 local PALETTES = {
-	Midnight = {win = "111113", panel = "19191C", card = "212125", field = "29292E", hover = "313137", pop = "161619", text = "EEEEF0", label = "D3D3D8", sub = "8F8F97", dim = "6A6A72", off = "34343A", knobOff = "8C8C93", accent = "E0313DFF"},
-	Graphite = {win = "131416", panel = "1B1C1F", card = "232428", field = "2B2D31", hover = "33353A", pop = "17181B", text = "ECEDEF", label = "D0D2D6", sub = "8C9097", dim = "686C73", off = "36383D", knobOff = "8A8E95", accent = "3D8BFFFF"},
-	Abyss = {win = "0B0F17", panel = "111725", card = "18202F", field = "202A3B", hover = "283246", pop = "0E131E", text = "E8EEF8", label = "C9D2E2", sub = "8793A8", dim = "5F6B80", off = "2A3448", knobOff = "8490A6", accent = "3FB6D8FF"},
-	Forest = {win = "0D1210", panel = "141B18", card = "1B2420", field = "232E29", hover = "2A3731", pop = "101713", text = "E8F1EC", label = "CAD8D0", sub = "899A90", dim = "627268", off = "2C3832", knobOff = "89978F", accent = "3CC48AFF"},
-	Orchid = {win = "110E17", panel = "191521", card = "211B2B", field = "292235", hover = "31293F", pop = "14111B", text = "F0ECF6", label = "D6CFE2", sub = "958CA5", dim = "6D657D", off = "352D42", knobOff = "90889F", accent = "9A6BFFFF"},
-	Ember = {win = "14100E", panel = "1D1714", card = "261F1B", field = "2F2622", hover = "372D28", pop = "191310", text = "F4EEEA", label = "DDD2CB", sub = "9F9289", dim = "766A62", off = "3A302B", knobOff = "9A8E86", accent = "FF8A3DFF"},
-	Blush = {win = "140E11", panel = "1D1519", card = "261C21", field = "2F2329", hover = "382A31", pop = "181114", text = "F6ECF0", label = "E0D0D7", sub = "A28E97", dim = "79676F", off = "3C2E35", knobOff = "9D8B93", accent = "FF5C93FF"},
-	Porcelain = {win = "E9E9EE", panel = "F6F6F9", card = "FFFFFF", field = "EDEDF2", hover = "E3E3EA", pop = "FBFBFD", text = "17171C", label = "2B2B33", sub = "6B6B76", dim = "90909B", off = "D2D2DA", knobOff = "FFFFFF", accent = "2F6BFFFF", light = true},
+	Dark = {win = "111113", panel = "19191C", card = "212125", field = "29292E", hover = "313137", pop = "161619", text = "EEEEF0", label = "D3D3D8", sub = "8F8F97", dim = "6A6A72", off = "34343A", knobOff = "8C8C93", accent = "E0313DFF"},
+	Gray = {win = "131416", panel = "1B1C1F", card = "232428", field = "2B2D31", hover = "33353A", pop = "17181B", text = "ECEDEF", label = "D0D2D6", sub = "8C9097", dim = "686C73", off = "36383D", knobOff = "8A8E95", accent = "3D8BFFFF"},
+	Blue = {win = "0B0F17", panel = "111725", card = "18202F", field = "202A3B", hover = "283246", pop = "0E131E", text = "E8EEF8", label = "C9D2E2", sub = "8793A8", dim = "5F6B80", off = "2A3448", knobOff = "8490A6", accent = "3FB6D8FF"},
+	Green = {win = "0D1210", panel = "141B18", card = "1B2420", field = "232E29", hover = "2A3731", pop = "101713", text = "E8F1EC", label = "CAD8D0", sub = "899A90", dim = "627268", off = "2C3832", knobOff = "89978F", accent = "3CC48AFF"},
+	Purple = {win = "110E17", panel = "191521", card = "211B2B", field = "292235", hover = "31293F", pop = "14111B", text = "F0ECF6", label = "D6CFE2", sub = "958CA5", dim = "6D657D", off = "352D42", knobOff = "90889F", accent = "9A6BFFFF"},
+	Orange = {win = "14100E", panel = "1D1714", card = "261F1B", field = "2F2622", hover = "372D28", pop = "191310", text = "F4EEEA", label = "DDD2CB", sub = "9F9289", dim = "766A62", off = "3A302B", knobOff = "9A8E86", accent = "FF8A3DFF"},
+	Pink = {win = "140E11", panel = "1D1519", card = "261C21", field = "2F2329", hover = "382A31", pop = "181114", text = "F6ECF0", label = "E0D0D7", sub = "A28E97", dim = "79676F", off = "3C2E35", knobOff = "9D8B93", accent = "FF5C93FF"},
+	Light = {win = "E9E9EE", panel = "F6F6F9", card = "FFFFFF", field = "EDEDF2", hover = "E3E3EA", pop = "FBFBFD", text = "17171C", label = "2B2B33", sub = "6B6B76", dim = "90909B", off = "D2D2DA", knobOff = "FFFFFF", accent = "2F6BFFFF", light = true},
 }
 D.PALETTES = PALETTES
+D.THEME_ALIAS = {
+	Midnight = "Dark", Graphite = "Gray", Abyss = "Blue", Forest = "Green", Orchid = "Purple", Amethyst = "Purple",
+	Ember = "Orange", Blush = "Pink", ["Rosé"] = "Pink", Porcelain = "Light",
+}
+function D.themeName(name)
+	return D.THEME_ALIAS[name] or name
+end
 
 function D.addPalette(name, p)
 	local function hx(v, fb)
@@ -1470,7 +1480,7 @@ function D.paletteOf(name)
 			off = derive(card, 0.08 * dir), knobOff = light and Color3.new(1, 1, 1) or sub, light = light,
 		}
 	end
-	local p = PALETTES[name] or PALETTES.Midnight
+	local p = PALETTES[D.themeName(name)] or PALETTES.Dark
 	return {
 		win = hex(p.win), panel = hex(p.panel), card = hex(p.card), field = hex(p.field), hover = hex(p.hover), pop = hex(p.pop),
 		text = hex(p.text), label = hex(p.label), sub = hex(p.sub), dim = hex(p.dim), off = hex(p.off), knobOff = hex(p.knobOff),
@@ -4984,14 +4994,7 @@ function D.buildWindow()
 	end
 
 	frame({Position = UDim2.new(0, 14, 1, -82), Size = UDim2.new(0, SIDE_W - 28, 0, 1), BackgroundColor3 = T.ink, BackgroundTransparency = 0.93, ZIndex = 2, Parent = win})
-	local credit = button({Position = UDim2.new(0, 14, 1, -104), Size = UDim2.new(0, SIDE_W - 28, 0, 16), Text = "made with arvn lib", TextSize = 11, FontFace = D.F(D.W.med), TextColor3 = T.dim, TextTransparency = 0.25, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 3, Parent = win})
-	D.tip(credit, "arvn lib by koteqjjjj. Click to copy the GitHub link.")
-	credit.MouseEnter:Connect(function() tween(credit, 0.15, {TextTransparency = 0, TextColor3 = T.sub}) end)
-	credit.MouseLeave:Connect(function() tween(credit, 0.2, {TextTransparency = 0.25, TextColor3 = T.dim}) end)
-	credit.MouseButton1Click:Connect(function()
-		D.play("click")
-		D.runAction("act_lib_link")
-	end)
+	D.makeCredit(win)
 	local prof = button({Position = UDim2.new(0, 8, 1, -74), Size = UDim2.fromOffset(SIDE_W - 16, 62), BackgroundColor3 = T.ink, BackgroundTransparency = 1, ZIndex = 2, Parent = win})
 	corner(prof, M.rCard)
 	local av = new("ImageLabel", {Position = UDim2.fromOffset(8, 12), Size = UDim2.fromOffset(38, 38), BackgroundColor3 = T.field, BorderSizePixel = 0, Image = D.avatarImage(), ZIndex = 3, Parent = prof})
@@ -5103,7 +5106,35 @@ function D.buildWindow()
 	D.selectPage(W.current, true)
 end
 
+local CREDIT_TEXT = "made with arvn lib"
+function D.makeCredit(win)
+	local credit = button({Name = "Credit", Position = UDim2.new(0, 14, 1, -104), Size = UDim2.new(0, SIDE_W - 28, 0, 16), Text = CREDIT_TEXT, TextSize = 11, FontFace = D.F(D.W.med), TextColor3 = T.dim, TextTransparency = 0.25, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 40, Parent = win})
+	D.tip(credit, "arvn lib by koteqjjjj. Click to copy the GitHub link.")
+	credit.MouseEnter:Connect(function() tween(credit, 0.15, {TextTransparency = 0, TextColor3 = T.sub}) end)
+	credit.MouseLeave:Connect(function() tween(credit, 0.2, {TextTransparency = 0.25, TextColor3 = T.dim}) end)
+	credit.MouseButton1Click:Connect(function()
+		D.play("click")
+		D.runAction("act_lib_link")
+	end)
+	W.credit = credit
+	return credit
+end
+
+local creditClock = 0
+local function creditOk(c, win)
+	return c and c.Parent == win and c.Visible and c.Text == CREDIT_TEXT and c.TextTransparency < 0.6 and c.TextSize >= 9
+		and c.AbsoluteSize.X >= 60 and c.AbsoluteSize.Y >= 10 and c.ZIndex >= 40
+end
+
 function D.stepWindow(dt)
+	creditClock += dt
+	if creditClock > 1 and W.win and W.win.Parent then
+		creditClock = 0
+		if not creditOk(W.credit, W.win) then
+			pcall(function() if W.credit then W.credit:Destroy() end end)
+			D.makeCredit(W.win)
+		end
+	end
 	local win = W.win
 	if not win or not win.Visible then return end
 	local k = 1 - math.exp(-dt * 26)
@@ -6580,17 +6611,33 @@ end
 
 function D.buildWidgets(root)
 	for i, w in ipairs(D.WIDGETS) do buildWidget(w, root, i) end
-	if D.buildMobileButton then D.buildMobileButton(root) end
+	if D.buildUIButton then D.buildUIButton(root) end
 end
 
-function D.buildMobileButton(root)
-	local mode = S.ui_mobile or "Auto"
-	if mode == "Off" or (mode == "Auto" and not (UIS.TouchEnabled and not UIS.KeyboardEnabled)) then return end
-	local b = button({AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 10), Size = UDim2.fromOffset(46, 46), BackgroundColor3 = T.win, BackgroundTransparency = 0, Parent = root})
+local UB = {}
+D.on(RunService.RenderStepped, function()
+	local b = UB.btn
+	if not UB.pressing or not b or not b.Parent then return end
+	local m = UIS:GetMouseLocation()
+	local d = m - UB.start
+	if not UB.moved and d.Magnitude > 6 then UB.moved = true end
+	if UB.moved then
+		local vp = D.viewport()
+		local s = b.AbsoluteSize
+		b.Position = UDim2.fromOffset(math.clamp(UB.origin.X + d.X, 0, vp.X - s.X), math.clamp(UB.origin.Y + d.Y, 0, vp.Y - s.Y))
+	end
+end)
+
+function D.buildUIButton(root)
+	if S.ui_button == false or D.cleanShot then return end
+	local vp = D.viewport()
+	local x, y = D.clampPos(D.META.ub_x or math.floor(vp.X / 2 - 23), D.META.ub_y or 10, 46, 46)
+	local b = button({Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(46, 46), BackgroundColor3 = T.win, BackgroundTransparency = 0, Parent = root})
+	D.tip(b, "Open or close the menu. Drag to move.")
 	corner(b, 23)
 	stroke(b, 0.7, true)
 	D.onGlass(b, 0.3)
-	local mb = type(D.CONFIG.MobileButton) == "table" and D.CONFIG.MobileButton or {}
+	local mb = type(D.CONFIG.UIButton) == "table" and D.CONFIG.UIButton or {}
 	if mb.Text then
 		b.Size = UDim2.fromOffset(0, 40)
 		b.AutomaticSize = Enum.AutomaticSize.X
@@ -6606,9 +6653,24 @@ function D.buildMobileButton(root)
 	else
 		icon(mb.Icon or "layout-grid", 20, T.text, {AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Parent = b})
 	end
-	b.Activated:Connect(function()
-		D.press(b)
-		D.setMenu(not D.menuOpen)
+	UB.btn = b
+	b.InputBegan:Connect(function(i)
+		if i.UserInputType ~= Enum.UserInputType.MouseButton1 and i.UserInputType ~= Enum.UserInputType.Touch then return end
+		UB.pressing, UB.moved = true, false
+		UB.start = UIS:GetMouseLocation()
+		UB.origin = Vector2.new(b.Position.X.Offset, b.Position.Y.Offset)
+	end)
+	b.InputEnded:Connect(function(i)
+		if i.UserInputType ~= Enum.UserInputType.MouseButton1 and i.UserInputType ~= Enum.UserInputType.Touch then return end
+		if not UB.pressing then return end
+		UB.pressing = false
+		if UB.moved then
+			D.META.ub_x, D.META.ub_y = b.Position.X.Offset, b.Position.Y.Offset
+			D.writeMeta()
+		else
+			D.press(b)
+			D.setMenu(not D.menuOpen)
+		end
 	end)
 end
 end
@@ -7293,6 +7355,58 @@ end
 
 D.LIB_LINK = "https://github.com/koteqjjjj/arvn"
 A.act_lib_link = function() copy(D.LIB_LINK, "arvn lib link copied") end
+D.RESET_HOOKS = D.RESET_HOOKS or {}
+function D.resetEverything()
+	for _, fn in ipairs(D.RESET_HOOKS) do
+		local ok, err = pcall(fn)
+		if not ok and D.logError then D.logError(err) end
+	end
+	pcall(function()
+		if not (listfiles and isfolder and isfolder(DIR)) then return end
+		for _, f in ipairs(listfiles(DIR)) do
+			local name = string.match(f, "[^/\\]+$") or ""
+			if name ~= "key.txt" and not string.find(name, "^icons_") and not string.find(name, "^sounds_") then
+				if isfolder(f) then
+					pcall(delfolder, f)
+				else
+					pcall(delfile, f)
+				end
+			end
+		end
+	end)
+	for k, v in pairs(D.DEF) do
+		if not string.find(k, "^__") then S[k] = D.clone(v) end
+	end
+	S.cfg_current = nil
+	D.bulk = true
+	for k in pairs(D.DEF) do pcall(D.fire, k) end
+	D.bulk = false
+	D.fire("ui_theme")
+	for f in pairs(D.BIND) do D.BIND[f] = nil end
+	for f, b in pairs(D.DEF_BIND) do D.BIND[f] = {key = b.key, mode = b.mode, list = b.list} end
+	for f in pairs(D.BIND) do D.fire("__bind:" .. f) end
+	D.fire("__binds")
+	table.clear(D.META)
+	D.customAvatar = nil
+	D.bgAsset = nil
+	D.fire("__configs")
+	local x, y = D.centerWin()
+	if D.W_STATE then
+		D.W_STATE.pos = nil
+		D.W_STATE.target = Vector2.new(x, y)
+	end
+	D.markDirty()
+	D.requestRebuild()
+	D.notify("Reset", "Everything is back to default.", {icon = "rotate-ccw"})
+end
+A.act_reset_everything = function()
+	D.openDialog({
+		Title = "Reset everything?",
+		Content = "Every option goes back to default. Saved configs, positions and pictures are deleted.",
+		Icon = "triangle-alert",
+		Buttons = {{Name = "Cancel"}, {Name = "Reset", Style = "Primary", Callback = function() D.resetEverything() end}},
+	})
+end
 A.act_eject = function()
 	D.setMenu(false)
 	task.wait(0.25)
@@ -7311,9 +7425,12 @@ A.act_ov_reset = function()
 	D.notify("Overlays", "Positions reset.", {icon = "rotate-ccw", dur = 2})
 end
 A.act_reset_all = function()
+	D.bulk = true
 	for k, v in pairs(D.DEF) do
-		if not D.NOSAVE[k] then set(k, D.clone(v)) end
+		if not D.NOSAVE[k] then pcall(set, k, D.clone(v)) end
 	end
+	D.bulk = false
+	D.fire("ui_theme")
 	for f in pairs(D.BIND) do
 		D.BIND[f] = nil
 		D.fire("__bind:" .. f)
@@ -7327,7 +7444,7 @@ A.act_reset_all = function()
 	D.notify("Reset", "Every setting is back to its default.", {icon = "rotate-ccw"})
 end
 A.act_pal_copy = function()
-	local name = S.ui_theme == "Custom" and "Midnight" or S.ui_theme
+	local name = S.ui_theme == "Custom" and "Dark" or D.themeName(S.ui_theme)
 	local p = D.PALETTES[name]
 	if not p then return end
 	D.suspendRebuild = true
@@ -7794,6 +7911,8 @@ function D.start()
 		end
 	end
 	if not D.validKey("ui_menukey", S.ui_menukey) then S.ui_menukey = "RightShift" end
+	S.ui_theme = D.themeName(S.ui_theme)
+	if not D.PALETTES[S.ui_theme] and S.ui_theme ~= "Custom" then S.ui_theme = "Dark" end
 	if S.ui_remember ~= false and D.META.page and D.ENTRY[D.META.page] and not D.ENTRY[D.META.page].children then
 		D.W_STATE.current = D.META.page
 	end
@@ -7844,7 +7963,25 @@ function D.start()
 	D.buildOverlays()
 	D.buildHud()
 
+	local palSyncing = false
+	local function syncPalette()
+		if S.ui_theme == "Custom" then return end
+		local p = D.PALETTES[D.themeName(S.ui_theme)]
+		if not p then return end
+		palSyncing = true
+		D.suspendRebuild = true
+		for k, key in pairs({pal_win = "win", pal_panel = "panel", pal_card = "card", pal_text = "text", pal_sub = "sub"}) do
+			set(k, "#" .. string.sub(p[key], 1, 6) .. "FF")
+		end
+		D.suspendRebuild = false
+		palSyncing = false
+	end
 	D.watch("ui_theme", function(v)
+		local real = D.themeName(v)
+		if real ~= v then
+			set("ui_theme", real)
+			return
+		end
 		if S.ui_accent_sync ~= false and v ~= "Custom" then
 			local p = D.PALETTES[v]
 			if p and p.accent then
@@ -7853,11 +7990,20 @@ function D.start()
 				D.suspendRebuild = false
 			end
 		end
+		syncPalette()
 		D.requestRebuild()
 	end)
 	for _, k in ipairs({"pal_win", "pal_panel", "pal_card", "pal_text", "pal_sub"}) do
-		D.watch(k, function() if S.ui_theme == "Custom" then D.requestRebuild() end end)
+		D.watch(k, function()
+			if palSyncing or D.bulk then return end
+			if S.ui_theme ~= "Custom" then
+				set("ui_theme", "Custom")
+			else
+				D.requestRebuild()
+			end
+		end)
 	end
+	syncPalette()
 	for _, k in ipairs({"bg_on", "bg_opacity", "bg_dark", "bg_fit"}) do D.watch(k, D.applyBackground) end
 	for _, k in ipairs({"prof_name", "prof_tag"}) do D.watch(k, function() D.refreshOverlays() end) end
 	D.watch("cfg_autosave", function(v)
@@ -7894,7 +8040,7 @@ function D.start()
 	D.watch("fps_unlock", D.applyFps)
 	D.watch("fps_cap", D.applyFps)
 	D.watch("perf_no3d", D.apply3d)
-	for _, k in ipairs({"ks_layout", "ks_mouse", "ks_cps", "ks_space", "ui_mobile"}) do D.watch(k, D.buildOverlays) end
+	for _, k in ipairs({"ks_layout", "ks_mouse", "ks_cps", "ks_space", "ui_button"}) do D.watch(k, D.buildOverlays) end
 	D.watch("wm_region", function(v) if v then D.lookupRegion() end end)
 	if S.wm_region then D.lookupRegion() end
 	for _, k in ipairs({"ov_wm", "wm_style", "wm_fps", "wm_ping", "wm_region", "wm_time", "wm_uptime", "wm_user", "ov_kb", "kb_inactive", "kb_hideempty", "ov_ks"}) do
@@ -9430,7 +9576,7 @@ local Theme = {}
 API.Theme = Theme
 function Theme:Register(name, palette) return API:AddTheme(name, palette) end
 Theme.Add = Theme.Register
-function Theme:Set(name) D.set("ui_theme", name) end
+function Theme:Set(name) D.set("ui_theme", D.themeName(name)) end
 function Theme:Get() return API:GetTheme() end
 function Theme:List()
 	local t = {}
@@ -9525,6 +9671,11 @@ function Config:Set(key, value)
 	local t = D.clone(S.cfg_userdata or {})
 	t[tostring(key)] = value
 	D.set("cfg_userdata", t)
+end
+function Config:ResetAll() D.resetEverything() end
+function API:OnReset(fn)
+	D.RESET_HOOKS = D.RESET_HOOKS or {}
+	table.insert(D.RESET_HOOKS, fn)
 end
 function Config:Get(key, default)
 	local t = S.cfg_userdata
@@ -9691,6 +9842,8 @@ function API:CreateWindow(o)
 	o = o or {}
 	if D.windowObj then return D.windowObj end
 	local cfg = D.CONFIG
+	local ov = D.DEF_OVERRIDES or {}
+	D.DEF_OVERRIDES = ov
 	cfg.Title = o.Title or o.Name or "arvn"
 	cfg.Subtitle = o.Subtitle or o.SubTitle
 	cfg.Author = o.Author or o.Credits
@@ -9767,12 +9920,15 @@ function API:CreateWindow(o)
 	cfg.Search = o.Search
 	cfg.SubFolder = o.SubFolder
 	cfg.WatermarkText = o.WatermarkText
-	if type(o.MobileButton) == "table" then
-		cfg.MobileButton = o.MobileButton
-		if o.MobileButton.Mode then ov.ui_mobile = o.MobileButton.Mode end
-	elseif o.MobileButton == false then
-		ov.ui_mobile = "Off"
+	local ub = o.UIButton
+	if ub == nil then ub = o.MobileButton end
+	if type(ub) == "table" then
+		cfg.UIButton = ub
+	elseif ub == false then
+		ov.ui_button = false
 	end
+	if o.Sounds == false then ov.snd_on = false end
+	if o.Notifications == false then ov.nt_on = false end
 	if type(o.Background) == "table" or type(o.Background) == "string" then
 		local bg = type(o.Background) == "string" and {Image = o.Background} or o.Background
 		cfg.Background = bg
@@ -9782,12 +9938,10 @@ function API:CreateWindow(o)
 		if bg.Fit then ov.bg_fit = bg.Fit end
 	end
 	if o.NotifySide then ov.nt_pos = o.NotifySide end
-	local ov = D.DEF_OVERRIDES or {}
-	D.DEF_OVERRIDES = ov
 	if o.MenuKey and D.validKey("ui_menukey", o.MenuKey) then ov.ui_menukey = o.MenuKey end
 	if o.Theme then
-		ov.ui_theme = o.Theme
-		local p = D.PALETTES[o.Theme]
+		ov.ui_theme = D.themeName(o.Theme)
+		local p = D.PALETTES[ov.ui_theme]
 		if p and p.accent and not o.Accent then ov.ui_accent = "#" .. string.sub(p.accent, 1, 6) .. "FF" end
 	end
 	if o.Accent then ov.ui_accent = hex(o.Accent) end
