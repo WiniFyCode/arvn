@@ -13,6 +13,8 @@
   &nbsp;·&nbsp;
   <a href="docs/customization.md">Customization</a>
   &nbsp;·&nbsp;
+  <a href="docs/icons.md">Icons</a>
+  &nbsp;·&nbsp;
   <a href="docs/reference.md">Reference</a>
   &nbsp;·&nbsp;
   <a href="example.lua">Example</a>

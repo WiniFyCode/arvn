@@ -1918,24 +1918,77 @@ if D.ICON_SHEET then
 end
 ATLAS.data = nil
 D.ICON_RECT = ICON_RECT
+D.ICON_READY = next(ICON_RECT) ~= nil
+D.ICON_ALIAS = {aim = "crosshair", aimbot = "crosshair", combat = "swords", pvp = "swords", weapons = "sword", guns = "crosshair", visuals = "eye", visual = "eye", esp = "scan-eye", movement = "footprints", speed = "gauge", player = "user", players = "users", character = "person-standing", misc = "package", world = "globe", teleport = "map-pin", teleports = "map-pin", autofarm = "repeat", farm = "pickaxe", shop = "shopping-cart", main = "house", config = "sliders-horizontal", configs = "folder", credits = "info", fun = "sparkles", troll = "ghost", exploits = "bug", scripts = "code", game = "gamepad-2", targets = "target", keybinds = "keyboard", audio = "volume-2", sound = "volume-2", money = "coins", items = "box", inventory = "boxes", stats = "chart-column", vehicle = "car"}
+
+local function iconKey(name)
+	local k = string.gsub(string.lower(name), "[%s_]+", "-")
+	return D.ICON_ALIAS[k] or k
+end
 
 local function iconSource(name)
+	if type(name) == "number" then name = tostring(name) end
 	if type(name) ~= "string" then return nil end
 	local r = ICON_RECT[name]
 	if r then return D.ICON_SHEET, r, Vector2.new(ATLAS.size, ATLAS.size) end
 	if D.ICON[name] then return D.ICON[name] end
 	if string.find(name, "^rbxasset") or string.find(name, "^rbxthumb") then return name end
 	if string.match(name, "^%d+$") then return "rbxassetid://" .. name end
+	r = ICON_RECT[iconKey(name)]
+	if r then return D.ICON_SHEET, r, Vector2.new(ATLAS.size, ATLAS.size) end
 	return nil
 end
 D.iconSource = iconSource
 
+local function pictureSource(name)
+	if type(name) ~= "string" then return nil end
+	if string.find(name, "^https?://") or string.find(name, "^rbxthumb") or string.find(name, "^headshot:%d+$") or string.find(name, "^thumb:%d+$") then return name end
+	return nil
+end
+D.pictureSource = pictureSource
+
+local badPictures = {}
+local function loadPicture(o, src)
+	o:SetAttribute("ArvnPicture", src)
+	o.ImageRectOffset = Vector2.zero
+	o.ImageRectSize = Vector2.zero
+	o.ImageColor3 = Color3.new(1, 1, 1)
+	o.Image = ""
+	if not D.resolveImage then return end
+	D.resolveImage(src, function(asset)
+		if o:GetAttribute("ArvnPicture") ~= src then return end
+		if asset then
+			o.Image = asset
+			return
+		end
+		if not badPictures[src] then
+			badPictures[src] = true
+			warn("arvn: could not load the icon " .. src)
+		end
+		o:SetAttribute("ArvnPicture", nil)
+		local img, off, size = iconSource("image")
+		o.Image = img or ""
+		o.ImageRectOffset = off or Vector2.zero
+		o.ImageRectSize = size or Vector2.zero
+		o.ImageColor3 = T.sub
+	end)
+end
+
 function D.hasIcon(name)
-	return iconSource(name) ~= nil
+	return pictureSource(name) ~= nil or iconSource(name) ~= nil
 end
 
 function D.setIcon(o, name)
 	if not (o and (o:IsA("ImageLabel") or o:IsA("ImageButton"))) then return end
+	local pic = pictureSource(name)
+	if pic then
+		loadPicture(o, pic)
+		return
+	end
+	if o:GetAttribute("ArvnPicture") then
+		o:SetAttribute("ArvnPicture", nil)
+		o.ImageColor3 = T.sub
+	end
 	local img, off, size = iconSource(name)
 	o.Image = img or ""
 	o.ImageRectOffset = off or Vector2.zero
@@ -1950,6 +2003,13 @@ function D.icon(name, size, color, props)
 	props.BorderSizePixel = 0
 	props.Size = props.Size or UDim2.fromOffset(size, size)
 	if isBtn then props.AutoButtonColor = false end
+	local pic = pictureSource(name)
+	if pic then
+		props.ScaleType = Enum.ScaleType.Fit
+		local o = new(isBtn and "ImageButton" or "ImageLabel", props)
+		loadPicture(o, pic)
+		return o
+	end
 	local img, off, rs = iconSource(name)
 	if img then
 		props.Image = img
@@ -1970,7 +2030,11 @@ end
 
 function D.iconColor(o, c)
 	if not o then return end
-	if o:IsA("ImageLabel") or o:IsA("ImageButton") then o.ImageColor3 = c else o.TextColor3 = c end
+	if o:IsA("ImageLabel") or o:IsA("ImageButton") then
+		if not o:GetAttribute("ArvnPicture") then o.ImageColor3 = c end
+	else
+		o.TextColor3 = c
+	end
 end
 
 local ACC, accCap = {}, 128
@@ -8273,6 +8337,20 @@ function D.logError(err)
 	if type(API.OnError) == "function" then pcall(API.OnError, err) end
 end
 
+local warnedIcons = {}
+local function pickIcon(v, fallback)
+	if v == nil or v == false then return fallback end
+	if type(v) == "number" then return tostring(v) end
+	if type(v) ~= "string" then return fallback end
+	if not D.ICON_READY or D.hasIcon(v) then return v end
+	if not warnedIcons[v] then
+		warnedIcons[v] = true
+		warn("arvn: there is no icon called \"" .. v .. "\". See Arvn:Icons() or docs/icons.md for the list.")
+	end
+	return fallback
+end
+D.pickIcon = pickIcon
+
 local function spawnSafe(fn, ...)
 	if type(fn) ~= "function" then return end
 	task.spawn(function(...)
@@ -8385,7 +8463,7 @@ end
 
 local function common(row, o)
 	row.desc = o.Tooltip or o.Description or o.Desc or row.desc
-	if o.Icon then row.icon = o.Icon end
+	if o.Icon then row.icon = pickIcon(o.Icon, nil) end
 	if o.Risky then row.risky = true end
 	if o.Disabled then row.disabled = true end
 	if o.Locked then
@@ -8472,7 +8550,7 @@ function Element:SetDescription(textValue)
 	return self
 end
 function Element:SetIcon(name)
-	self.Row.icon = name
+	self.Row.icon = pickIcon(name, nil)
 	rebuild()
 	return self
 end
@@ -9066,7 +9144,7 @@ function Tab:RightSection(name) return self:Section({Name = name, Side = "Right"
 
 function Tab:SubTab(o)
 	o = type(o) == "string" and {Name = o} or o
-	local entry = tabOptions({id = tabId(o.Name, o.Flag or o.Id, self.entry.id), name = o.Name or "Tab", icon = o.Icon or "app-window", page = {{}, {}}}, o)
+	local entry = tabOptions({id = tabId(o.Name, o.Flag or o.Id, self.entry.id), name = o.Name or "Tab", icon = pickIcon(o.Icon, "app-window"), page = {{}, {}}}, o)
 	self.entry.page = nil
 	self.entry.children = self.entry.children or {}
 	table.insert(self.entry.children, entry)
@@ -9103,7 +9181,7 @@ Group.__index = Group
 
 function Group:Tab(o)
 	o = type(o) == "string" and {Name = o} or o
-	local entry = tabOptions({id = tabId(o.Name or o.Title, o.Flag or o.Id), name = o.Name or o.Title or "Tab", icon = o.Icon or "app-window", page = {{}, {}}}, o)
+	local entry = tabOptions({id = tabId(o.Name or o.Title, o.Flag or o.Id), name = o.Name or o.Title or "Tab", icon = pickIcon(o.Icon, "app-window"), page = {{}, {}}}, o)
 	local list = D.USER_NAV
 	local idx = #list + 1
 	if self.header then
@@ -9387,7 +9465,7 @@ function Tab:SetName(name)
 end
 Tab.SetTitle = Tab.SetName
 function Tab:SetIcon(icon)
-	self.entry.icon = icon
+	self.entry.icon = pickIcon(icon, "app-window")
 	navChanged()
 	return self
 end
@@ -10116,7 +10194,7 @@ function API:CreateWindow(o)
 				e.hidden = true
 			elseif type(v) == "table" then
 				if v.Name then e.name = v.Name end
-				if v.Icon then e.icon = v.Icon end
+				if v.Icon then e.icon = pickIcon(v.Icon, e.icon) end
 			elseif type(v) == "string" then
 				e.name = v
 			end

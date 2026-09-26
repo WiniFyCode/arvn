@@ -23,7 +23,7 @@
 | `Arvn:AddFont(name, family)` | adds a menu font |
 | `Arvn:SetNotifySide(side)` | `"Top Right"`, `"Top Left"`, `"Bottom Right"` or `"Bottom Left"` |
 | `Arvn:Toggle(open)` | opens or closes the menu |
-| `Arvn:Icons()` | every icon name |
+| `Arvn:Icons()` | every icon name, see [Icons](icons.md) |
 
 | Field | What it is |
 |---|---|

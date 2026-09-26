@@ -23,6 +23,8 @@ speed:SetName("Sprint")
 | `SetSide("Left" or "Right")` | sections |
 | `MoveUp`, `MoveDown`, `MoveTo` | elements |
 
+Icons can be a name, an image link or an asset id. See [Icons](icons.md).
+
 Built-in pages can also be renamed when the window is created:
 
 ```lua

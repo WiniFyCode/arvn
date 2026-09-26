@@ -41,7 +41,7 @@ local Movement = Player:Section("Movement")
 ```
 
 - Sections fill the left column first, then the right. To choose, use `Player:Section({Name = "Movement", Side = "Right"})`.
-- Icons are names from [lucide.dev/icons](https://lucide.dev/icons).
+- Pick an icon from the [icon list](icons.md), or use your own image link.
 - A tab can hold other tabs: `Player:SubTab({Name = "Camera", Icon = "camera"})`.
 
 ## Add elements

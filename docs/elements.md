@@ -9,7 +9,7 @@ These options work on every element:
 | `Name` | the label |
 | `Flag` | the name of the stored value |
 | `Description` | text shown when you hover |
-| `Icon` | a small icon before the label |
+| `Icon` | a small icon before the label, see [Icons](icons.md) |
 | `Callback` | your function, runs when the value changes |
 | `Risky` | red label |
 | `Locked` | disables it; the text you give becomes the hover text |
