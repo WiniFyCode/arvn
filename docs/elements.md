@@ -44,6 +44,16 @@ Section:Slider({Name = "FOV", Min = 30, Max = 120, Default = 70, Step = 1, Suffi
 
 `Live = false` runs the callback only when the mouse is released.
 
+Change the range at any time:
+
+```lua
+local fov = Section:Slider({Name = "FOV", Min = 30, Max = 120, Default = 70})
+fov:SetMax(1000)
+fov:SetMin(1)
+fov:SetStep(5)
+fov:SetSuffix(" studs")
+```
+
 ## Dropdown
 
 ```lua

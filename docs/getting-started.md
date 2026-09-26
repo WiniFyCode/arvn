@@ -18,7 +18,7 @@ local Window = Arvn:CreateWindow({
 ```
 
 - `Title` shows in the sidebar and the watermark.
-- `Author` and `Version` show in Settings > Interface > About.
+- `Author` and `Version` show in Settings > General > About.
 - `Folder` is the folder in `workspace` where the script's settings and configs are saved. Give every script its own folder.
 
 The menu opens and closes with **Right Shift**. Change the default with `MenuKey = "Insert"`.
@@ -110,9 +110,11 @@ local stop = Arvn:Loop(function() end, 1)
 
 Every window comes with:
 
-- Settings pages: Interface, Theme, Overlays, Personalize, Sounds and Configs
+- Settings pages: General, Appearance, Overlays, Profile, Sounds and Configs
 - a watermark and a keybind list
 - a UI button on screen that opens and closes the menu
+- a minimize button next to the close button
+- the executor name in the watermark and in About
 - search, notifications, sounds and autosave
 
 Turn any of them off:
@@ -126,7 +128,7 @@ Arvn:CreateWindow({
 	Search = false,
 	Sounds = false,
 	Notifications = false,
-	Pages = {Personalize = false, Sounds = false},
+	Pages = {Profile = false, Sounds = false},
 })
 ```
 
@@ -181,7 +183,7 @@ Arvn:CreateWindow({
 })
 ```
 
-They show in Settings > Interface > About, next to the arvn lib credit.
+They show in Settings > General > About, next to the arvn lib credit.
 
 ## Next
 

@@ -334,6 +334,7 @@ local NAV_ALL = {
 				info("i_fps", "Frame Rate", "Frames rendered per second.", "0"),
 				info("i_ping", "Ping", "Round trip to the server.", "0 ms"),
 				info("i_mem", "Memory", "Client memory in use.", "0 MB"),
+				info("i_exec", "Executor", "The executor running this script.", ""),
 			}},
 			{title = "Performance", rows = {
 				row("graph", "g_fps", "Frame Rate History", "Last minute of frame rate, sampled twice a second."),
@@ -344,7 +345,7 @@ local NAV_ALL = {
 				row("hero", "hero", "", ""),
 			}},
 			{title = "Shortcuts", rows = {
-				button("nav_theme", "Customize Theme", "Open the theme editor.", {icon = "palette", nav = "set_theme"}),
+				button("nav_theme", "Appearance", "Theme, colors and layout.", {icon = "palette", nav = "set_theme"}),
 				button("nav_overlays", "Overlays", "Watermark, keybind list, keystrokes and notifications.", {icon = "layers", nav = "set_overlays"}),
 				button("nav_configs", "Configs", "Save, load and share your setup.", {icon = "folder", nav = "set_configs"}),
 			}},
@@ -551,7 +552,6 @@ local NAV_ALL = {
 				button("act_copy_pos", "Copy Position", "Copy your position to the clipboard.", {icon = "map-pin"}),
 				button("act_copy_cf", "Copy CFrame", "Copy your full CFrame to the clipboard.", {icon = "copy"}),
 				button("act_clean_shot", "Clean Screenshot", "Hide every overlay for five seconds.", {icon = "camera"}),
-				button("act_notify_test", "Test Notification", "Send a sample notification.", {icon = "bell"}),
 			}},
 			{title = "Chat", rows = {
 				toggle("chat_log", "Chat Log", "Record chat messages below.", {nobind = true}),
@@ -562,7 +562,7 @@ local NAV_ALL = {
 	}},
 	{group = "Settings"},
 	{id = "settings", name = "Settings", icon = "settings", children = {
-		{id = "set_interface", name = "Interface", icon = "app-window", page = {
+		{id = "set_interface", name = "General", icon = "sliders-horizontal", page = {
 			{
 				{title = "Menu", rows = {
 					key("ui_menukey", "Menu Key", "Key that opens and closes the menu.", "RightShift"),
@@ -573,18 +573,10 @@ local NAV_ALL = {
 					drop("ui_cursor", "Menu Cursor", "Cursor used while the menu is open.", {"System", "Dot"}, "System"),
 					toggle("ui_button", "UI Button", "A small button on screen that opens and closes the menu.", {def = true, nobind = true}),
 				}},
-				{title = "Layout", rows = {
-					slider("ui_scale", "Size", "Size of the whole menu. Applies when you let go.", 75, 130, 100, {suf = "%", commit = true}),
-					drop("ui_density", "Spacing", "Space between rows.", {"Comfortable", "Compact"}, "Comfortable"),
-					slider("ui_radius", "Roundness", "How round the corners are.", 4, 20, 14, {commit = true}),
-					drop("ui_font", "Font", "Font used by the menu.", D.FONTS_UI, "BuilderSans"),
-					drop("ui_toggle", "Switch Style", "Look of every on/off control.", {"Switch", "Square", "Checkbox"}, "Switch"),
-				}},
 			},
 			{
 				{title = "Behavior", rows = {
 					toggle("ui_tooltips", "Tooltips", "Explain options when you hover them.", {def = true, nobind = true}),
-					slider("ui_tip_delay", "Tooltip Delay", "Hover time before a tooltip appears.", 0.2, 1.5, 0.6, {step = 0.05, suf = "s"}),
 					toggle("ui_anim", "Animations", "Animate transitions.", {def = true, nobind = true}),
 					slider("ui_anim_speed", "Animation Speed", "Speed of every transition.", 50, 200, 100, {suf = "%"}),
 					drop("ui_bindnotify", "On/Off Alerts", "Show a message when something turns on or off.", {"Off", "Keybinds Only", "Always"}, "Keybinds Only"),
@@ -594,6 +586,7 @@ local NAV_ALL = {
 					info("i_script", "Script", "Name of this script.", ""),
 					info("i_author", "Made By", "Who made this script.", ""),
 					info("i_version", "Version", "Version of this script.", ""),
+					info("i_exec", "Executor", "The executor running this script.", ""),
 					row("info", "i_lib", "UI Library", "The interface is built with arvn lib.", {value = "arvn lib", protected = true}),
 					button("act_lib_link", "arvn lib on GitHub", "Copy the link to arvn lib.", {icon = "external-link", protected = true, nobind = true}),
 				}},
@@ -603,7 +596,7 @@ local NAV_ALL = {
 				}},
 			},
 		}},
-		{id = "set_theme", name = "Theme", icon = "palette", page = {
+		{id = "set_theme", name = "Appearance", icon = "palette", page = {
 			{
 				{title = "Theme", rows = {
 					drop("ui_theme", "Theme", "Colors of the whole menu.", D.THEME_NAMES, "Dark"),
@@ -616,6 +609,13 @@ local NAV_ALL = {
 					color("pal_card", "Cards", "Change any color to make your own theme.", "#222226FF"),
 					color("pal_text", "Text", "Change any color to make your own theme.", "#EEEEF0FF"),
 					color("pal_sub", "Muted Text", "Change any color to make your own theme.", "#909098FF"),
+				}},
+				{title = "Layout", rows = {
+					slider("ui_scale", "Size", "Size of the whole menu. Applies when you let go.", 75, 130, 100, {suf = "%", commit = true}),
+					drop("ui_density", "Spacing", "Space between rows.", {"Comfortable", "Compact"}, "Comfortable"),
+					slider("ui_radius", "Roundness", "How round the corners are.", 4, 20, 14, {commit = true}),
+					drop("ui_font", "Font", "Font used by the menu.", D.FONTS_UI, "BuilderSans"),
+					drop("ui_toggle", "Switch Style", "Look of every on/off control.", {"Switch", "Square", "Checkbox"}, "Switch"),
 				}},
 			},
 			{
@@ -636,7 +636,6 @@ local NAV_ALL = {
 					slider("fx_size", "Size", "Particle size.", 1, 6, 3),
 					slider("fx_speed", "Speed", "Movement speed.", 25, 300, 100, {suf = "%"}),
 					toggle("fx_follow", "Follow Cursor", "Particles drift with your mouse movement.", {def = true, nobind = true}),
-					toggle("fx_always", "Show When Closed", "Keep particles on screen with the menu closed.", {nobind = true}),
 				}},
 			},
 		}},
@@ -650,6 +649,7 @@ local NAV_ALL = {
 					toggle("wm_region", "Location", "Show your connection's city and country.", {nobind = true}),
 					toggle("wm_uptime", "Session Time", "Show how long the menu has been running.", {def = true, nobind = true}),
 					toggle("wm_time", "Clock", "Show the local time.", {nobind = true}),
+					toggle("wm_exec", "Executor", "Show the executor you are using.", {def = true, nobind = true}),
 					toggle("wm_user", "Account", "Show your name and avatar.", {def = true, nobind = true}),
 				}},
 				{title = "Keybind List", rows = {
@@ -673,22 +673,19 @@ local NAV_ALL = {
 					drop("nt_style", "Style", "Full cards or slim pills.", {"Card", "Compact"}, "Card"),
 					slider("nt_max", "Max On Screen", "Most notifications shown at once.", 1, 8, 5),
 				}},
-				{title = "Layout", rows = {
+				{title = "Positions", rows = {
 					toggle("ov_lock", "Lock Positions", "Stop overlays from being dragged.", {nobind = true}),
 					button("act_ov_reset", "Reset Positions", "Move every overlay back to its default spot.", {icon = "rotate-ccw"}),
 				}},
 			},
 		}},
-		{id = "set_personal", name = "Personalize", icon = "wallpaper", page = {
+		{id = "set_personal", name = "Profile", icon = "user-round", page = {
 			{
 				{title = "Profile", rows = {
 					input("prof_name", "Display Name", "Shown in the sidebar. Leave empty for your Roblox name.", "", {placeholder = "your name"}),
 					input("prof_tag", "Tagline", "Line under your name. Empty shows your username.", "", {placeholder = "@username"}),
-					input("pfp_url", "Picture Link", "Direct link to a PNG or JPG, for example from catbox.moe.", "", {placeholder = "https://files.catbox.moe/..."}),
+					input("pfp_url", "Picture Link", "Direct PNG or JPG link, for example from catbox.moe. Saved after the first load.", "", {placeholder = "https://files.catbox.moe/..."}),
 					row("buttons", "pfp_btns", "", "", {buttons = {{"act_pfp_load", "Load Picture", "Download the picture link and use it."}, {"act_pfp_reset", "Roblox Avatar", "Go back to your Roblox headshot."}}}),
-				}},
-				{title = "How To", rows = {
-					row("note", "pfp_note", "Upload an image to catbox.moe (or any host that gives a direct .png or .jpg link), paste the link and press Load. The file is cached, so it loads instantly next time.", ""),
 				}},
 			},
 			{
@@ -707,7 +704,6 @@ local NAV_ALL = {
 				{title = "Sound", rows = {
 					toggle("snd_on", "Sounds", "Play menu sounds.", {def = true, nobind = true}),
 					slider("snd_vol", "Volume", "How loud menu sounds are.", 0, 100, 55, {suf = "%"}),
-					toggle("snd_pitch", "Vary Pitch", "Slightly change the pitch so repeats sound natural.", {def = true, nobind = true}),
 				}},
 				{title = "Interface", rows = {
 					drop("snd_click", "Click", "Sound for buttons and rows.", D.SOUND_NAMES, "Soft", {preview = true}),
@@ -1724,7 +1720,7 @@ function D.playName(name, pitch, volume)
 	end
 	pool.i = pool.i % #pool + 1
 	local snd = pool[pool.i]
-	local var = S.snd_pitch == false and 0 or (math.random() - 0.5) * 0.08
+	local var = (math.random() - 0.5) * 0.08
 	snd.PlaybackSpeed = (pitch or 1) * (1 + var)
 	snd.Volume = ((S.snd_vol or 55) / 100) * (volume or 1) * 1.6
 	snd.TimePosition = 0
@@ -2056,7 +2052,7 @@ function D.showTip(owner, str)
 	tip.token += 1
 	local token = tip.token
 	tip.owner = owner
-	task.delay(S.ui_tip_delay or 0.6, function()
+	task.delay(0.6, function()
 		if token ~= tip.token or tip.owner ~= owner or not owner.Parent or D.dragging() then return end
 		local m = D.mouse()
 		if not D.inRect(owner, m.X, m.Y, 2) then return end
@@ -4917,7 +4913,7 @@ function D.buildWindow()
 	if W.pos then x, y = W.target.X, W.target.Y end
 	local cx, cy = D.centerWin()
 	x, y = D.clampWin(x or cx, y or cy)
-	local win = new("CanvasGroup", {Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(WIN_W, WIN_H), BackgroundColor3 = T.win, GroupTransparency = D.menuOpen and 0 or 1, Visible = D.menuOpen == true, Parent = D.L.win})
+	local win = new("CanvasGroup", {Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(WIN_W, W.minimized and 66 or WIN_H), BackgroundColor3 = T.win, GroupTransparency = D.menuOpen and 0 or 1, Visible = D.menuOpen == true, Parent = D.L.win})
 	W.win = win
 	W.target = Vector2.new(x, y)
 	W.pos = Vector2.new(x, y)
@@ -4993,9 +4989,10 @@ function D.buildWindow()
 		end
 	end
 
-	frame({Position = UDim2.new(0, 14, 1, -82), Size = UDim2.new(0, SIDE_W - 28, 0, 1), BackgroundColor3 = T.ink, BackgroundTransparency = 0.93, ZIndex = 2, Parent = win})
+	local profSep = frame({Position = UDim2.new(0, 14, 1, -82), Size = UDim2.new(0, SIDE_W - 28, 0, 1), BackgroundColor3 = T.ink, BackgroundTransparency = 0.93, ZIndex = 2, Visible = not W.minimized, Parent = win})
 	D.makeCredit(win)
-	local prof = button({Position = UDim2.new(0, 8, 1, -74), Size = UDim2.fromOffset(SIDE_W - 16, 62), BackgroundColor3 = T.ink, BackgroundTransparency = 1, ZIndex = 2, Parent = win})
+	local prof = button({Position = UDim2.new(0, 8, 1, -74), Size = UDim2.fromOffset(SIDE_W - 16, 62), BackgroundColor3 = T.ink, BackgroundTransparency = 1, ZIndex = 2, Visible = not W.minimized, Parent = win})
+	W.bottom = {profSep, prof}
 	corner(prof, M.rCard)
 	local av = new("ImageLabel", {Position = UDim2.fromOffset(8, 12), Size = UDim2.fromOffset(38, 38), BackgroundColor3 = T.field, BorderSizePixel = 0, Image = D.avatarImage(), ZIndex = 3, Parent = prof})
 	corner(av, 19)
@@ -5070,7 +5067,8 @@ function D.buildWindow()
 		D.openThemeQuick(thB)
 	end)
 	if D.CONFIG.Resizable ~= false then
-		local grip = button({AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -3, 1, -3), Size = UDim2.fromOffset(16, 16), ZIndex = 30, Parent = win})
+		local grip = button({AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -3, 1, -3), Size = UDim2.fromOffset(16, 16), ZIndex = 30, Visible = not W.minimized, Parent = win})
+		W.grip = grip
 		local gi = icon("move-diagonal", 12, T.dim, {AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Rotation = 0, ZIndex = 31, Parent = grip})
 		gi.ImageTransparency = 0.5
 		grip.MouseEnter:Connect(function() tween(gi, 0.15, {ImageTransparency = 0}) end)
@@ -5090,7 +5088,13 @@ function D.buildWindow()
 			end, grip)
 		end)
 	end
-	local closeB = headerButton(tools, "x", "Close menu", 4)
+	local minB = headerButton(tools, W.minimized and "maximize-2" or "minus", W.minimized and "Restore" or "Minimize", 4)
+	minB.MouseButton1Click:Connect(function()
+		D.play("click")
+		D.setMinimized(not W.minimized)
+	end)
+	W.minB = minB
+	local closeB = headerButton(tools, "x", "Close menu", 5)
 	closeB.MouseButton1Click:Connect(function()
 		D.play("click")
 		D.setMenu(false)
@@ -5106,9 +5110,32 @@ function D.buildWindow()
 	D.selectPage(W.current, true)
 end
 
+local MIN_H = 66
+function D.setMinimized(v)
+	v = v and true or false
+	W.minimized = v
+	local win = W.win
+	if not win then return end
+	D.closePops(1)
+	D.hideTip()
+	tween(win, 0.32, {Size = UDim2.fromOffset(WIN_W, v and MIN_H or WIN_H)}, Enum.EasingStyle.Quint)
+	if W.grip then W.grip.Visible = not v end
+	for _, o in ipairs(W.bottom or {}) do
+		if o.Parent then o.Visible = not v end
+	end
+	if W.credit then W.credit.Visible = not v end
+	if W.minB then
+		for _, c in ipairs(W.minB:GetChildren()) do
+			if c:IsA("ImageLabel") then D.setIcon(c, v and "maximize-2" or "minus") end
+		end
+	end
+	D.applyBackdrop()
+	D.fire("__minimized")
+end
+
 local CREDIT_TEXT = "made with arvn lib"
 function D.makeCredit(win)
-	local credit = button({Name = "Credit", Position = UDim2.new(0, 14, 1, -104), Size = UDim2.new(0, SIDE_W - 28, 0, 16), Text = CREDIT_TEXT, TextSize = 11, FontFace = D.F(D.W.med), TextColor3 = T.dim, TextTransparency = 0.25, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 40, Parent = win})
+	local credit = button({Name = "Credit", Position = UDim2.new(0, 14, 1, -104), Size = UDim2.new(0, SIDE_W - 28, 0, 16), Text = CREDIT_TEXT, TextSize = 11, FontFace = D.F(D.W.med), TextColor3 = T.dim, TextTransparency = 0.25, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 40, Visible = not W.minimized, Parent = win})
 	D.tip(credit, "arvn lib by koteqjjjj. Click to copy the GitHub link.")
 	credit.MouseEnter:Connect(function() tween(credit, 0.15, {TextTransparency = 0, TextColor3 = T.sub}) end)
 	credit.MouseLeave:Connect(function() tween(credit, 0.2, {TextTransparency = 0.25, TextColor3 = T.dim}) end)
@@ -5130,7 +5157,7 @@ function D.stepWindow(dt)
 	creditClock += dt
 	if creditClock > 1 and W.win and W.win.Parent then
 		creditClock = 0
-		if not creditOk(W.credit, W.win) then
+		if not W.minimized and not creditOk(W.credit, W.win) then
 			pcall(function() if W.credit then W.credit:Destroy() end end)
 			D.makeCredit(W.win)
 		end
@@ -5210,8 +5237,8 @@ function D.openProfile(anchor)
 			if b.key ~= "None" and not string.find(f, "^__") then nbinds += 1 end
 		end
 		D.buildCard(body, {
-			{t = "action", icon = "wallpaper", label = "Personalize", value = "Picture, name", arrow = true, desc = "Profile picture, display name and window background.", fn = function() D.selectPage("set_personal") end},
-			{t = "action", icon = "palette", label = "Theme", value = S.ui_theme, arrow = true, desc = "Open the theme editor.", fn = function() D.selectPage("set_theme") end},
+			{t = "action", icon = "user-round", label = "Profile", value = "Picture, name", arrow = true, desc = "Profile picture, display name and window background.", fn = function() D.selectPage("set_personal") end},
+			{t = "action", icon = "palette", label = "Appearance", value = S.ui_theme, arrow = true, desc = "Theme, colors and layout.", fn = function() D.selectPage("set_theme") end},
 			{t = "action", icon = "folder", label = "Configs", value = S.cfg_current or "Autosave", arrow = true, desc = "Save, load and share setups.", fn = function() D.selectPage("set_configs") end},
 			{t = "action", icon = "keyboard", label = "Keybinds", value = nbinds .. " set", arrow = true, desc = "See and edit every keybind in one place.", fn = function(r) D.openKeybindManager(r, lvl + 1) end},
 		}, scope, lvl, 2)
@@ -5540,7 +5567,7 @@ function D.buildOverlays()
 	if D.CONFIG.Logo then D.logoMark(logo, 22, 1) end
 	text({Text = D.CONFIG.WatermarkText or D.CONFIG.Title or "arvn", FontFace = D.F(D.W.bold), TextSize = 15, TextColor3 = T.text, Size = UDim2.fromOffset(0, 38), AutomaticSize = Enum.AutomaticSize.X, LayoutOrder = 2, Parent = logo})
 	O.wmParts = {}
-	local defs = {{"fps", "gauge"}, {"ping", "wifi"}, {"region", "map-pin"}, {"uptime", "timer"}, {"time", "sun"}, {"user", nil}}
+	local defs = {{"fps", "gauge"}, {"ping", "wifi"}, {"region", "map-pin"}, {"uptime", "timer"}, {"time", "sun"}, {"exec", "cpu"}, {"user", nil}}
 	for i, d in ipairs(defs) do
 		local sep = frame({Size = UDim2.fromOffset(1, 16), BackgroundColor3 = T.ink, BackgroundTransparency = 0.85, LayoutOrder = 10 + i * 2, Parent = wm})
 		local grp = frame({Size = UDim2.fromOffset(0, 38), AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1, LayoutOrder = 11 + i * 2, Parent = wm})
@@ -5691,6 +5718,7 @@ function D.refreshOverlays(fps, ping)
 		region = (S.wm_region and D.region) or nil,
 		uptime = S.wm_uptime and D.fmtTime(os.clock() - D.started) or nil,
 		time = S.wm_time and os.date("%H:%M") or nil,
+		exec = S.wm_exec and D.executor or nil,
 		user = S.wm_user and name or nil,
 	}
 	for k, part in pairs(O.wmParts) do
@@ -6087,7 +6115,7 @@ placeBlur()
 D.onCleanup(function() blur:Destroy() end)
 
 function D.applyBackdrop()
-	local open = D.menuOpen
+	local open = D.menuOpen and not (D.W_STATE and D.W_STATE.minimized)
 	tween(D.L.dim, 0.35, {BackgroundTransparency = (open and S.ui_dim) and (1 - (S.ui_dim_amt or 40) / 100) or 1}, Enum.EasingStyle.Sine)
 	placeBlur()
 	tween(blur, 0.35, {Size = (open and S.ui_blur) and (S.ui_blur_size or 24) or 0}, Enum.EasingStyle.Sine)
@@ -6127,7 +6155,7 @@ end
 
 function D.stepParticles(dt)
 	local style = S.fx_style
-	local active = style ~= "Off" and (D.menuOpen or S.fx_always) and not D.cleanShot
+	local active = style ~= "Off" and D.menuOpen and not D.cleanShot and not (D.W_STATE and D.W_STATE.minimized)
 	fxAlpha = fxAlpha + ((active and 1 or 0) - fxAlpha) * math.min(1, dt * 5)
 	if fxAlpha < 0.01 and not active then
 		if #flakes > 0 then D.resetParticles() end
@@ -7942,6 +7970,11 @@ function D.start()
 			D.bgAsset = "rbxassetid://" .. img
 		end
 	end
+	do
+		local ok, name, ver = pcall(function() return identifyexecutor() end)
+		D.executor = ok and name and (tostring(name) .. (ver and ver ~= "" and (" " .. tostring(ver)) or "")) or "Unknown"
+	end
+	S.i_exec = D.executor
 	S.i_script = D.CONFIG.Title or "arvn"
 	S.i_author = D.CONFIG.Author or ""
 	S.i_version = D.CONFIG.Version and tostring(D.CONFIG.Version) or ""
@@ -8043,7 +8076,7 @@ function D.start()
 	for _, k in ipairs({"ks_layout", "ks_mouse", "ks_cps", "ks_space", "ui_button"}) do D.watch(k, D.buildOverlays) end
 	D.watch("wm_region", function(v) if v then D.lookupRegion() end end)
 	if S.wm_region then D.lookupRegion() end
-	for _, k in ipairs({"ov_wm", "wm_style", "wm_fps", "wm_ping", "wm_region", "wm_time", "wm_uptime", "wm_user", "ov_kb", "kb_inactive", "kb_hideempty", "ov_ks"}) do
+	for _, k in ipairs({"ov_wm", "wm_style", "wm_fps", "wm_ping", "wm_region", "wm_time", "wm_uptime", "wm_exec", "wm_user", "ov_kb", "kb_inactive", "kb_hideempty", "ov_ks"}) do
 		D.watch(k, function() D.refreshOverlays(D.lastFps, D.lastPing) end)
 	end
 	D.watch("__binds", function() D.refreshKeybinds() end)
@@ -8307,6 +8340,29 @@ end
 function Element:Lock(reason) return self:SetDisabled(true, reason) end
 function Element:Unlock() return self:SetDisabled(false) end
 function Element:IsLocked() return self.Row.disabled == true end
+local function sliderRange(self, lo, hi, step)
+	if self.Kind ~= "slider" then return self end
+	local r = self.Row
+	if lo ~= nil then r.min = tonumber(lo) or r.min end
+	if hi ~= nil then r.max = tonumber(hi) or r.max end
+	if step ~= nil then r.step = tonumber(step) or r.step end
+	if r.max < r.min then r.min, r.max = r.max, r.min end
+	if D.DEF[self.Flag] ~= nil then D.DEF[self.Flag] = math.clamp(D.DEF[self.Flag], r.min, r.max) end
+	local v = S[self.Flag]
+	if type(v) == "number" and (v < r.min or v > r.max) then D.set(self.Flag, math.clamp(v, r.min, r.max)) end
+	rebuild()
+	return self
+end
+function Element:SetMin(v) return sliderRange(self, v, nil, nil) end
+function Element:SetMax(v) return sliderRange(self, nil, v, nil) end
+function Element:SetRange(lo, hi) return sliderRange(self, lo, hi, nil) end
+function Element:SetStep(v) return sliderRange(self, nil, nil, v) end
+function Element:SetSuffix(text)
+	self.Row.suf = text
+	rebuild()
+	return self
+end
+
 function Element:SetValues(list, keep)
 	if type(list) == "function" then list = list() end
 	self.Row.opts = list
@@ -8990,6 +9046,11 @@ function Window:SelectTab(t)
 	local id = type(t) == "table" and t.entry and t.entry.id or t
 	if D.W_STATE.win then D.selectPage(id) else D.W_STATE.current = id end
 end
+function Window:Minimize(v)
+	if v == nil then v = true end
+	D.setMinimized(v)
+end
+function Window:IsMinimized() return D.W_STATE.minimized == true end
 function Window:Eject() UI.Unload() end
 Window.Destroy = Window.Eject
 Window.Unload = Window.Eject
@@ -9891,7 +9952,7 @@ function API:CreateWindow(o)
 	G.main.group = groups.Main or o.MainGroup or G.main.group
 	G.utility.group = groups.Utility or o.UtilityGroup or G.utility.group
 	G.settings.group = groups.Settings or o.SettingsGroup or G.settings.group
-	local PAGES = {Dashboard = "home", Server = "server", Tools = "tools", Settings = "settings", Interface = "set_interface", Theme = "set_theme", Overlays = "set_overlays", Personalize = "set_personal", Sounds = "set_sounds", Configs = "set_configs"}
+	local PAGES = {Dashboard = "home", Server = "server", Tools = "tools", Settings = "settings", General = "set_interface", Interface = "set_interface", Appearance = "set_theme", Theme = "set_theme", Overlays = "set_overlays", Profile = "set_personal", Personalize = "set_personal", Sounds = "set_sounds", Configs = "set_configs"}
 	local function pageEntry(id)
 		if D.BUILTIN[id] then return D.BUILTIN[id] end
 		for _, c in ipairs(D.BUILTIN.settings.children) do
@@ -9899,7 +9960,7 @@ function API:CreateWindow(o)
 		end
 	end
 	for key, id in pairs(PAGES) do
-		local v = key ~= "Theme" and o[key] or nil
+		local v = key ~= "Theme" and key ~= "Profile" and o[key] or nil
 		if v == nil and type(o.Pages) == "table" then v = o.Pages[key] end
 		if v == nil and type(o.SettingsPages) == "table" then v = o.SettingsPages[key] end
 		local e = pageEntry(id)

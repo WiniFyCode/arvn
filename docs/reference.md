@@ -62,6 +62,7 @@
 | `SetTitle`, `SetSubtitle`, `SetAuthor`, `SetLogo`, `SetSize(w, h)`, `SetBackground({...})` | change the window |
 | `SetTheme`, `SetAccent`, `SetFont`, `SetScale`, `SetMenuKey` | change the look and key |
 | `Toggle(open)`, `IsOpen()`, `Center()`, `OpenSearch()` | control the menu |
+| `Minimize(bool)`, `IsMinimized()` | shrink the window to its title bar or bring it back |
 | `OnOpen(fn)`, `OnClose(fn)` | run a function when the menu opens or closes |
 | `LockAll(reason)`, `UnlockAll()` | disable every element, for example until a key is checked |
 | `SaveConfig(name)`, `LoadConfig(name)` | configs |

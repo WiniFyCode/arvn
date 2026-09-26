@@ -7,7 +7,7 @@ Groups, tabs, sections and elements can be changed at any time, including the bu
 ```lua
 Window:GetGroup("Main"):SetName("Home")
 Window:GetGroup("Settings"):SetName("Config")
-Window:GetTab("Theme"):SetName("Colors")
+Window:GetTab("Appearance"):SetName("Look")
 Window:GetTab("Sounds"):SetVisible(false)
 
 Player:SetName("Character"):SetIcon("person-standing")
@@ -29,7 +29,7 @@ Built-in pages can also be renamed when the window is created:
 Arvn:CreateWindow({
 	Title = "My Script",
 	Groups = {Main = "Home", Settings = "Config"},
-	Pages = {Theme = "Colors", Personalize = false},
+	Pages = {Appearance = "Look", Profile = false},
 })
 ```
 
@@ -56,7 +56,7 @@ Arvn.Theme:Set("Ocean")
 
 Colors you leave out are worked out from the others.
 
-Players can also make their own theme in Settings > Theme > Colors. Changing any color there switches the menu to the Custom theme.
+Players can also make their own theme in Settings > Appearance > Colors. Changing any color there switches the menu to the Custom theme.
 
 Change one color on the current theme:
 
