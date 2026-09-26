@@ -1,11 +1,24 @@
 # Icons
 
-Tabs, sub-tabs, elements and notifications take an `Icon`. Use a name from the list below.
+Pick an icon by writing its name. The whole list, with pictures, is at the [bottom of this page](#all-icons).
 
 ```lua
 Main:Tab({Name = "Aim", Icon = "crosshair"})
 Aim:SetIcon("target")
 ```
+
+Icons work everywhere the menu shows one:
+
+| Where | How |
+|---|---|
+| tabs and sub-tabs | `Icon = "crosshair"`, or `Tab:SetIcon("crosshair")` |
+| built-in pages | `Pages = {Appearance = {Icon = "brush"}}` in `CreateWindow` |
+| elements | `Icon = "zap"` on any element, or `SetIcon("zap")` |
+| buttons on a row | `Element:AddButton({Icon = "copy", Callback = fn})` |
+| notifications and dialogs | `Icon = "bell"` |
+| widgets and watermark parts | `Icon = "coins"` |
+| the UI button | `UIButton = {Icon = "menu"}` |
+| your own UI | `ui.Icon("star", 16, color)` inside `Custom` and `CustomPage` |
 
 ## Common picks
 

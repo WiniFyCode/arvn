@@ -369,10 +369,11 @@ local NAV_ALL = {
 					}
 				)}),
 				toggle("cam_unlockzoom", "Unlock Zoom", "Let the camera zoom much farther out."),
-				toggle("cam_freecam", "Freecam", "Fly the camera with WASD, E and Q. Hold right click to look.", {sub = sub("Freecam",
+				toggle("cam_freecam", "Freecam", "Fly the camera with WASD, E and Q. Hold right click to look, scroll to change speed. The mouse stays free so you can click things.", {sub = sub("Freecam",
 					{
-						slider("cam_free_speed", "Speed", "Base flying speed.", 5, 200, 40),
+						slider("cam_free_speed", "Speed", "Base flying speed. Scroll while flying to change it.", 5, 200, 40),
 						slider("cam_free_boost", "Boost", "Speed multiplier while holding Shift.", 1, 10, 3),
+						toggle("cam_free_mouse", "Free Mouse", "Keep the cursor free so you can click buttons and things in the world. Hold right click to look around.", {def = true, nobind = true}),
 					}
 				)}),
 				toggle("cam_nobob", "Steady Camera", "Keep the camera still when the game bobs it."),
@@ -1456,6 +1457,7 @@ D.THEME_ALIAS = {
 	Ember = "Orange", Blush = "Pink", ["Rosé"] = "Pink", Porcelain = "Light",
 }
 function D.themeName(name)
+	if name ~= nil and PALETTES[name] then return name end
 	return D.THEME_ALIAS[name] or name
 end
 
@@ -1544,6 +1546,59 @@ function D.applyTheme()
 	end
 	if D.applyBinds then D.applyBinds() end
 	if D.fire then D.fire("__theme") end
+end
+
+local PAINT_TEXT = {TextLabel = true, TextButton = true, TextBox = true}
+local PAINT_IMAGE = {ImageLabel = true, ImageButton = true}
+local function paintAll(map)
+	local root = D.gui
+	if not root then return end
+	local function swap(o, prop)
+		local c = o[prop]
+		local n = map[c:ToHex()]
+		if n then o[prop] = n end
+	end
+	for _, o in ipairs(root:GetDescendants()) do
+		local cls = o.ClassName
+		if o:IsA("GuiObject") then
+			swap(o, "BackgroundColor3")
+			if PAINT_TEXT[cls] then
+				swap(o, "TextColor3")
+				if cls == "TextBox" then swap(o, "PlaceholderColor3") end
+			elseif PAINT_IMAGE[cls] then
+				if not o:GetAttribute("ArvnPicture") then swap(o, "ImageColor3") end
+			elseif cls == "ScrollingFrame" then
+				swap(o, "ScrollBarImageColor3")
+			end
+		elseif cls == "UIStroke" then
+			swap(o, "Color")
+		end
+	end
+end
+
+local liveQueued, liveLast = false, 0
+function D.liveTheme()
+	if liveQueued then return end
+	liveQueued = true
+	task.delay(math.max(0, 0.05 - (os.clock() - liveLast)), function()
+		liveQueued = false
+		liveLast = os.clock()
+		if not D.alive then return end
+		local old = {}
+		for k, v in pairs(T) do
+			if typeof(v) == "Color3" then old[k] = v end
+		end
+		D.applyTheme()
+		local map, any = {}, false
+		for k, v in pairs(old) do
+			local n = T[k]
+			if typeof(n) == "Color3" and n ~= v then
+				map[v:ToHex()] = n
+				any = true
+			end
+		end
+		if any then pcall(paintAll, map) end
+	end)
 end
 
 function D.accent()
@@ -3320,6 +3375,158 @@ local function buttonsRow(card, spec, order, isLast, scope, level)
 	return {wrap = wrap}
 end
 
+local PAL_KEYS = {pal_win = "win", pal_panel = "panel", pal_card = "card", pal_text = "text", pal_sub = "sub"}
+D.PAL_KEYS = PAL_KEYS
+D.RESET_PAGES = {set_theme = true}
+local RESETTABLE = {toggle = true, slider = true, dropdown = true, input = true, color = true, keybind = true}
+
+function D.themeBase()
+	if S.ui_theme ~= "Custom" then
+		local cur = D.themeName(S.ui_theme)
+		if D.PALETTES[cur] then return cur end
+	end
+	local b = D.META and D.META.theme_base
+	if type(b) == "string" and D.PALETTES[b] then return b end
+	local d = D.themeName(D.DEF.ui_theme or "Dark")
+	return D.PALETTES[d] and d or "Dark"
+end
+
+local function paletteHex(key)
+	local p = D.PALETTES[D.themeBase()]
+	local v = p and p[key]
+	if type(v) ~= "string" then return nil end
+	v = string.gsub(v, "#", "")
+	return "#" .. string.upper(string.sub(v, 1, 6)) .. "FF"
+end
+
+function D.defaultOf(k)
+	local key = PAL_KEYS[k]
+	if key then return paletteHex(key) or D.DEF[k] end
+	if k == "ui_accent" and not (D.DEF_OVERRIDES and D.DEF_OVERRIDES.ui_accent) and S.ui_accent_sync ~= false then
+		return paletteHex("accent") or D.DEF[k]
+	end
+	return D.DEF[k]
+end
+
+local function same(a, b)
+	if type(a) == "table" and type(b) == "table" then
+		if #a ~= #b then return false end
+		for i = 1, #a do
+			if a[i] ~= b[i] then return false end
+		end
+		return true
+	end
+	if type(a) == "number" and type(b) == "number" then return math.abs(a - b) < 1e-6 end
+	if type(a) == "string" and type(b) == "string" then return string.upper(a) == string.upper(b) end
+	return a == b
+end
+
+function D.isDefault(k)
+	local d = D.defaultOf(k)
+	if d == nil then return true end
+	return same(S[k], d)
+end
+
+function D.resetFlag(k)
+	local d = D.defaultOf(k)
+	if d == nil then return end
+	set(k, D.clone(d))
+	if PAL_KEYS[k] and S.ui_theme == "Custom" then
+		for pk in pairs(PAL_KEYS) do
+			if not D.isDefault(pk) then return end
+		end
+		local acc = S.ui_accent
+		set("ui_theme", D.themeBase())
+		if S.ui_accent ~= acc then set("ui_accent", acc) end
+	end
+end
+
+function D.resetFlags(list)
+	local rest = {}
+	for _, k in ipairs(list) do
+		if k == "ui_theme" then D.resetFlag(k) else rest[#rest + 1] = k end
+	end
+	for _, k in ipairs(rest) do
+		if not PAL_KEYS[k] then D.resetFlag(k) end
+	end
+	for _, k in ipairs(rest) do
+		if PAL_KEYS[k] and not D.isDefault(k) then D.resetFlag(k) end
+	end
+end
+
+local function rowFlags(spec)
+	local out = {}
+	if RESETTABLE[spec.t] and spec.id and D.DEF[spec.id] ~= nil then out[#out + 1] = spec.id end
+	if spec.color then
+		local cid = spec.colorId or (spec.id .. "_color")
+		if D.DEF[cid] ~= nil then out[#out + 1] = cid end
+	end
+	return out
+end
+
+local function allDefault(list)
+	for _, k in ipairs(list) do
+		if not D.isDefault(k) then return false end
+	end
+	return true
+end
+
+local function watchFlags(scope, list, fn)
+	local set0 = {}
+	for _, k in ipairs(list) do set0[k] = true end
+	scope[#scope + 1] = D.watch("*", function(k)
+		if set0[k] or k == "ui_theme" or k == "ui_accent_sync" then fn() end
+	end)
+end
+
+function D.sectionFlags(sec)
+	local out = {}
+	local function add(rows)
+		for _, r in ipairs(rows or {}) do
+			if not (r.id and string.find(r.id, "{g}", 1, true)) then
+				for _, k in ipairs(rowFlags(r)) do out[#out + 1] = k end
+			end
+			if r.sub and r.sub.cards then
+				for _, c in ipairs(r.sub.cards) do add(c) end
+			end
+		end
+	end
+	add(sec.rows)
+	return out
+end
+
+function D.sectionReset(sct, flags, scope)
+	local ttl = sct:FindFirstChildOfClass("TextLabel")
+	if not ttl or #flags == 0 then return end
+	local rb = button({AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -4, 0.5, 0), Size = UDim2.fromOffset(0, 18), AutomaticSize = Enum.AutomaticSize.X, Text = "Reset", TextSize = 11, TextColor3 = T.dim, FontFace = D.F(D.W.semi), Visible = not allDefault(flags), Parent = ttl})
+	D.tip(rb, "Put everything in this section back to default")
+	rb.MouseEnter:Connect(function() tween(rb, 0.12, {TextColor3 = T.text}) end)
+	rb.MouseLeave:Connect(function() tween(rb, 0.16, {TextColor3 = T.dim}) end)
+	rb.MouseButton1Click:Connect(function()
+		D.play("click")
+		D.resetFlags(flags)
+	end)
+	watchFlags(scope, flags, function()
+		local want = not allDefault(flags)
+		if rb.Visible ~= want then rb.Visible = want end
+	end)
+end
+
+local function rowReset(right, flags, scope)
+	local rb = icon("rotate-ccw", 13, T.dim, {Button = true, Size = UDim2.fromOffset(16, 16), LayoutOrder = -40, Visible = not allDefault(flags), Parent = right})
+	D.tip(rb, "Reset to default")
+	rb.MouseEnter:Connect(function() D.iconColor(rb, T.text) end)
+	rb.MouseLeave:Connect(function() D.iconColor(rb, T.dim) end)
+	rb.MouseButton1Click:Connect(function()
+		D.play("click")
+		D.resetFlags(flags)
+	end)
+	watchFlags(scope, flags, function()
+		local want = not allDefault(flags)
+		if rb.Visible ~= want then rb.Visible = want end
+	end)
+end
+
 function D.buildRow(card, rawSpec, order, isLast, scope, level, ctx)
 	local g = ctx and ctx.g
 	local spec = instance(rawSpec, g)
@@ -3388,6 +3595,10 @@ function D.buildRow(card, rawSpec, order, isLast, scope, level, ctx)
 					if x.cb then task.spawn(x.cb) end
 				end)
 			end
+		end
+		if spec.reset ~= false and (spec.reset or (ctx and (ctx.secReset or (ctx.page and D.RESET_PAGES[ctx.page])))) then
+			local flags = rowFlags(spec)
+			if #flags > 0 then rowReset(right, flags, scope) end
 		end
 		if spec.arrow then icon("chevron-right", 16, T.sub, {LayoutOrder = 4, Parent = right}) end
 		if spec.sub then
@@ -4866,6 +5077,9 @@ local function buildColumn(e, content, ci, ncol, colSpec, scope)
 			local sec = it.sec
 			if sec.hidden then continue end
 			local sct = D.section(cf, sec.title, si)
+			if sec.reset ~= false and (sec.reset or D.RESET_PAGES[e.id]) then
+				D.sectionReset(sct, D.sectionFlags(sec), scope)
+			end
 			if sec.depends then
 				sct.Visible = D.checkConds(sec.depends)
 				for _, d in ipairs(sec.depends) do
@@ -4875,10 +5089,12 @@ local function buildColumn(e, content, ci, ncol, colSpec, scope)
 					end)
 				end
 			end
+			local sctx = ctx
+			if sec.reset then sctx = {page = ctx.page, g = ctx.g, secReset = true} end
 			if sec.tabs then
-				D.buildTabbox(sct, sec, scope, ctx, 1)
+				D.buildTabbox(sct, sec, scope, sctx, 1)
 			else
-				D.buildCard(sct, sec.rows, scope, 0, 1, ctx)
+				D.buildCard(sct, sec.rows, scope, 0, 1, sctx)
 			end
 		end
 	end
@@ -7011,17 +7227,24 @@ local thirdWasOn = false
 local rayParams = RaycastParams.new()
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
 
+local fcModal = D.button({Name = "F", Size = UDim2.fromOffset(1, 1), Position = UDim2.fromOffset(-10, -10), Modal = false, Parent = D.gui})
 local function stopFreecam()
 	if not fc.on then return end
 	fc.on = false
 	pcall(function() CAS:UnbindAction(sinkName) end)
 	unpatch("freecam")
+	fcModal.Modal = false
+	if fc.mouseWas then pcall(function() UIS.MouseBehavior = fc.mouseWas end) end
+	if fc.iconWas == false and not D.menuOpen then pcall(function() UIS.MouseIconEnabled = false end) end
+	fc.mouseWas, fc.iconWas = nil, nil
 end
 
 local function startFreecam()
 	local c = workspace.CurrentCamera
 	if fc.on or not c then return end
 	fc.on = true
+	fc.mouseWas = UIS.MouseBehavior
+	fc.iconWas = UIS.MouseIconEnabled
 	local cf = c.CFrame
 	fc.pos = cf.Position
 	local rx, ry = cf:ToEulerAnglesYXZ()
@@ -7033,7 +7256,13 @@ local function startFreecam()
 	end)
 end
 
-D.on(UIS.InputChanged, function(input)
+D.on(UIS.InputChanged, function(input, gp)
+	if fc.on and input.UserInputType == Enum.UserInputType.MouseWheel and not gp and not D.menuOpen then
+		local sp = S.cam_free_speed or 40
+		sp = math.clamp(math.floor(sp * (input.Position.Z > 0 and 1.15 or 1 / 1.15) + 0.5), 5, 200)
+		if sp ~= S.cam_free_speed then D.set("cam_free_speed", sp) end
+		return
+	end
 	if not fc.on or input.UserInputType ~= Enum.UserInputType.MouseMovement then return end
 	if not UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then return end
 	local d = input.Delta
@@ -7041,7 +7270,19 @@ D.on(UIS.InputChanged, function(input)
 	fc.pitch = math.clamp(fc.pitch - d.Y * 0.0045, -1.45, 1.45)
 end)
 
+local function freecamMouse()
+	local free = fc.on and S.cam_free_mouse ~= false and not D.menuOpen
+	local look = free and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
+	local wantModal = free and not look
+	if fcModal.Modal ~= wantModal then fcModal.Modal = wantModal end
+	if not free then return end
+	local want = look and Enum.MouseBehavior.LockCurrentPosition or Enum.MouseBehavior.Default
+	if UIS.MouseBehavior ~= want then UIS.MouseBehavior = want end
+	if not UIS.MouseIconEnabled then UIS.MouseIconEnabled = true end
+end
+
 local function freecamStep(dt, c)
+	freecamMouse()
 	if UIS:GetFocusedTextBox() then return end
 	local move = Vector3.zero
 	if UIS:IsKeyDown(Enum.KeyCode.W) then move += Vector3.new(0, 0, -1) end
@@ -7850,6 +8091,7 @@ function D.requestRebuild()
 	if rebuildPending or D.suspendRebuild then return end
 	if #D.pops > 0 or D.dragging() then
 		rebuildQueued = true
+		if D.liveTheme then D.liveTheme() end
 		return
 	end
 	rebuildQueued = false
@@ -8223,6 +8465,10 @@ function D.start()
 			set("ui_theme", real)
 			return
 		end
+		if v ~= "Custom" and D.PALETTES[v] and D.META.theme_base ~= v then
+			D.META.theme_base = v
+			D.writeMeta()
+		end
 		if S.ui_accent_sync ~= false and v ~= "Custom" then
 			local p = D.PALETTES[v]
 			if p and p.accent then
@@ -8305,7 +8551,8 @@ function D.start()
 	D.setMenu(S.ui_openload ~= false or PREV ~= nil)
 	if D.CONFIG.LoadNotification ~= false then
 		task.delay(0.4, function()
-			D.notify(D.CONFIG.Title or "arvn", "Loaded. Press " .. D.keyTitle(S.ui_menukey) .. " to open the menu.", {icon = "sparkles", dur = 6})
+			local ln = D.CONFIG.LoadNotification
+			D.notify(D.CONFIG.Title or "arvn", type(ln) == "string" and ln or ("Loaded. Press " .. D.keyTitle(S.ui_menukey) .. " to open the menu."), {icon = "sparkles", dur = 6})
 		end)
 	end
 end
@@ -8464,6 +8711,7 @@ end
 local function common(row, o)
 	row.desc = o.Tooltip or o.Description or o.Desc or row.desc
 	if o.Icon then row.icon = pickIcon(o.Icon, nil) end
+	if o.ResetButton ~= nil then row.reset = o.ResetButton and true or false end
 	if o.Risky then row.risky = true end
 	if o.Disabled then row.disabled = true end
 	if o.Locked then
@@ -8489,6 +8737,11 @@ end
 
 function Element:Get() return S[self.Flag] end
 Element.GetValue = Element.Get
+function Element:GetColor()
+	local v = S[self.Flag]
+	if type(v) ~= "string" then return nil end
+	return D.parseColor(v)
+end
 function Element:Set(v, quiet)
 	if self.Kind == "color" then v = hex(v) end
 	if quiet then silent[self.Flag] = true end
@@ -8602,6 +8855,7 @@ function Element:SetValues(list, keep)
 			D.set(self.Flag, list[1])
 		end
 	end
+	if self.Kind == "segment" then rebuild() end
 	return self
 end
 Element.SetOptions = Element.SetValues
@@ -8610,6 +8864,7 @@ function Element:AddValues(list)
 	for _, v in ipairs(type(list) == "table" and list or {list}) do
 		if not table.find(self.Row.opts, v) then table.insert(self.Row.opts, v) end
 	end
+	if self.Kind == "segment" then rebuild() end
 	return self
 end
 function Element:RemoveValues(list)
@@ -8617,6 +8872,7 @@ function Element:RemoveValues(list)
 		local i = table.find(self.Row.opts, v)
 		if i then table.remove(self.Row.opts, i) end
 	end
+	if self.Kind == "segment" then rebuild() end
 	return self
 end
 function Element:SetKey(key, mode)
@@ -9088,6 +9344,14 @@ function Section:Page(name)
 	navChanged()
 	return setmetatable({rows = tb.rows, also = sec.rows, page = self.page, path = self.path .. "_" .. slug(tb.name)}, Container)
 end
+function Section:GetPage(name)
+	local k = string.lower(tostring(name))
+	for _, tb in ipairs(self.sec.tabs or {}) do
+		if string.lower(tb.name) == k then
+			return setmetatable({rows = tb.rows, also = self.sec.rows, page = self.page, path = self.path .. "_" .. slug(tb.name)}, Container)
+		end
+	end
+end
 
 local function tabOptions(entry, o)
 	entry.desc = o.Description or o.Tooltip
@@ -9131,7 +9395,7 @@ function Tab:Section(o, side)
 	end
 	self.entry.page[col] = self.entry.page[col] or {}
 	local title = o.Name or o.Title or ""
-	local sec = {title = title, rows = {}, order = o.Order, hidden = o.Visible == false or nil, depends = conds(o.ShowWhen)}
+	local sec = {title = title, rows = {}, order = o.Order, hidden = o.Visible == false or nil, depends = conds(o.ShowWhen), reset = o.ResetButton}
 	table.insert(self.entry.page[col], sec)
 	navChanged()
 	local obj = setmetatable({rows = sec.rows, sec = sec, page = self.entry.id, entry = self.entry, col = col, path = self.entry.id .. "_" .. slug(title ~= "" and title or ("s" .. col))}, Section)
@@ -9217,7 +9481,21 @@ Window.AddTab = Window.Tab
 local function notify(o, body, dur)
 	if type(o) == "string" then o = {Title = o, Content = body, Duration = dur} end
 	o = o or {}
-	return D.notify(o.Title or D.CONFIG.Title or "Notice", o.Content or o.Body or o.Text or "", {icon = o.Icon, dur = o.Duration, sound = o.Sound, compact = o.Compact, kind = o.Kind, persist = o.Persist})
+	local buttons
+	if type(o.Buttons) == "table" then
+		buttons = {}
+		for i, bd in ipairs(o.Buttons) do
+			local cb = type(bd) == "table" and (bd.Callback or bd[2]) or nil
+			buttons[i] = {Name = type(bd) == "table" and (bd.Name or bd[1]) or tostring(bd), Callback = cb and function() spawnSafe(cb) end}
+		end
+	end
+	local click = o.Callback
+	local color = o.Color
+	if type(color) == "string" then color = (D.parseColor(color)) end
+	return D.notify(o.Title or D.CONFIG.Title or "Notice", o.Content or o.Body or o.Text or "", {
+		icon = o.Icon, dur = o.Duration, sound = o.Sound == false and "none" or o.Sound, compact = o.Compact, kind = o.Kind, persist = o.Persist,
+		buttons = buttons, color = color, callback = click and function() spawnSafe(click) end,
+	})
 end
 function Window:Notify(o, body, dur) return notify(o, body, dur) end
 function API:Notify(o, body, dur) return notify(o, body, dur) end
@@ -10129,6 +10407,11 @@ function API:CreateWindow(o)
 	local cfg = D.CONFIG
 	local ov = D.DEF_OVERRIDES or {}
 	D.DEF_OVERRIDES = ov
+	if type(o.Defaults) == "table" then
+		for k, v in pairs(o.Defaults) do
+			ov[tostring(k)] = typeof(v) == "Color3" and hex(v) or v
+		end
+	end
 	cfg.Title = o.Title or o.Name or "arvn"
 	cfg.Subtitle = o.Subtitle or o.SubTitle
 	cfg.Author = o.Author or o.Credits
