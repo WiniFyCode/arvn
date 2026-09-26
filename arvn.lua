@@ -534,10 +534,20 @@ local NAV_ALL = {
 			{title = "Performance", rows = {
 				toggle("fps_unlock", "FPS Unlocker", "Raise the frame rate cap."),
 				slider("fps_cap", "FPS Cap", "Frame rate limit. The far right is unlimited.", 30, 540, 240, {step = 10, commit = true, maxLabel = "Max"}),
-				toggle("perf_no3d", "Pause 3D Rendering", "Stop drawing the world to save power while idle.", {bind = "None"}),
-				toggle("perf_lowgfx", "Low Graphics", "Lowest render quality and no shadows."),
-				toggle("perf_particles", "Hide Particles", "Turn off particles, trails and beams."),
-				toggle("perf_textures", "Hide Textures", "Hide decals and textures."),
+				toggle("perf_potato", "Potato Mode", "Much lighter graphics for more FPS. The game stays playable. Click the arrow to pick what it changes.", {sub = sub("Potato Mode",
+					{
+						toggle("potato_quality", "Lowest Quality", "Set the render quality to the minimum.", {def = true, nobind = true}),
+						toggle("potato_shadows", "No Shadows", "Turn off every shadow.", {def = true, nobind = true}),
+						toggle("potato_materials", "Plain Materials", "Draw every part as smooth plastic.", {def = true, nobind = true}),
+						toggle("potato_textures", "No Textures", "Hide decals and textures.", {def = true, nobind = true}),
+					},
+					{
+						toggle("potato_particles", "No Particles", "Turn off particles, trails, beams, fire and smoke.", {def = true, nobind = true}),
+						toggle("potato_effects", "No Effects", "Turn off bloom, blur, sun rays, depth of field and haze.", {def = true, nobind = true}),
+						toggle("potato_terrain", "Simple Terrain", "Remove grass and still the water.", {def = true, nobind = true}),
+					}
+				)}),
+				toggle("perf_no3d", "Stop Rendering", "Stops drawing the game to save power while AFK. The screen turns white until you turn it off.", {bind = "None"}),
 			}},
 			{title = "Idle & Reconnect", rows = {
 				toggle("anti_afk", "Anti-AFK", "Stop the idle kick after 20 minutes."),
@@ -6736,6 +6746,8 @@ local grade = Instance.new("ColorCorrectionEffect")
 grade.Name = string.sub(HttpService:GenerateGUID(false), 1, 6)
 grade.Enabled = false
 grade.Parent = Lighting
+D.OWN_EFFECTS = D.OWN_EFFECTS or {}
+D.OWN_EFFECTS[grade] = true
 D.onCleanup(function() grade:Destroy() end)
 
 function D.applyWorld()
@@ -7156,41 +7168,73 @@ local function applyInvert()
 	if S.in_invert then patch("invert", UGS, "CameraYInverted", true) else unpatch("invert") end
 end
 
-local function perfTargets(fn)
-	for _, d in ipairs(workspace:GetDescendants()) do fn(d) end
-end
-local function particleHide(d)
-	if d:IsA("ParticleEmitter") or d:IsA("Trail") or d:IsA("Beam") or d:IsA("Smoke") or d:IsA("Fire") or d:IsA("Sparkles") then
-		patch("particles", d, "Enabled", false)
+local PARTICLES = {ParticleEmitter = true, Trail = true, Beam = true, Smoke = true, Fire = true, Sparkles = true}
+local function potatoItem(d)
+	if d:IsA("BasePart") then
+		if S.potato_shadows ~= false and d.CastShadow then patch("potato", d, "CastShadow", false) end
+		if S.potato_materials ~= false and d.Material ~= Enum.Material.SmoothPlastic and d.Material ~= Enum.Material.Neon and d.Material ~= Enum.Material.Glass then
+			patch("potato", d, "Material", Enum.Material.SmoothPlastic)
+			if d.Reflectance ~= 0 then patch("potato", d, "Reflectance", 0) end
+		end
+	elseif S.potato_textures ~= false and (d:IsA("Decal") or d:IsA("Texture")) then
+		if d.Transparency < 1 then patch("potato", d, "Transparency", 1) end
+	elseif S.potato_particles ~= false and PARTICLES[d.ClassName] then
+		patch("potato", d, "Enabled", false)
+	elseif S.potato_particles ~= false and d:IsA("Explosion") then
+		patch("potato", d, "Visible", false)
 	end
 end
-local function textureHide(d)
-	if d:IsA("Decal") or d:IsA("Texture") then patch("textures", d, "Transparency", 1) end
-end
-local perfConn
-local function applyPerf()
-	unpatch("particles")
-	unpatch("textures")
-	unpatch("quality")
-	if perfConn then
-		perfConn:Disconnect()
-		perfConn = nil
+
+local potatoConn
+local potatoToken = 0
+local function applyPotato()
+	potatoToken += 1
+	local token = potatoToken
+	if potatoConn then
+		potatoConn:Disconnect()
+		potatoConn = nil
 	end
-	if S.perf_particles then perfTargets(particleHide) end
-	if S.perf_textures then perfTargets(textureHide) end
-	if S.perf_lowgfx then
-		pcall(function() patch("quality", settings().Rendering, "QualityLevel", Enum.QualityLevel.Level01) end)
-		patch("quality", Lighting, "GlobalShadows", false)
+	unpatch("potato")
+	if not S.perf_potato then return end
+	if S.potato_quality ~= false then
+		pcall(function() patch("potato", settings().Rendering, "QualityLevel", Enum.QualityLevel.Level01) end)
 	end
-	if S.perf_particles or S.perf_textures then
-		perfConn = workspace.DescendantAdded:Connect(function(d)
-			if S.perf_particles then particleHide(d) end
-			if S.perf_textures then textureHide(d) end
-		end)
+	if S.potato_shadows ~= false then patch("potato", Lighting, "GlobalShadows", false) end
+	if S.potato_effects ~= false then
+		for _, fx in ipairs(Lighting:GetChildren()) do
+			if fx:IsA("PostEffect") and not (D.OWN_EFFECTS and D.OWN_EFFECTS[fx]) and not fx:IsA("ColorCorrectionEffect") then
+				patch("potato", fx, "Enabled", false)
+			elseif fx:IsA("Atmosphere") then
+				patch("potato", fx, "Density", 0)
+				patch("potato", fx, "Haze", 0)
+				patch("potato", fx, "Glare", 0)
+			end
+		end
 	end
+	if S.potato_terrain ~= false then
+		local t = workspace:FindFirstChildOfClass("Terrain")
+		if t then
+			pcall(function() patch("potato", t, "Decoration", false) end)
+			patch("potato", t, "WaterWaveSize", 0)
+			patch("potato", t, "WaterWaveSpeed", 0)
+			patch("potato", t, "WaterReflectance", 0)
+		end
+	end
+	potatoConn = workspace.DescendantAdded:Connect(function(d)
+		if token == potatoToken then pcall(potatoItem, d) end
+	end)
+	task.spawn(function()
+		local list = workspace:GetDescendants()
+		for i, d in ipairs(list) do
+			if token ~= potatoToken or not D.alive then return end
+			pcall(potatoItem, d)
+			if i % 1500 == 0 then task.wait() end
+		end
+	end)
 end
 D.onCleanup(function()
-	if perfConn then perfConn:Disconnect() end
+	potatoToken += 1
+	if potatoConn then potatoConn:Disconnect() end
 end)
 
 D.on(Players.PlayerAdded, function(p)
@@ -7254,7 +7298,11 @@ init(function()
 	end)
 	D.watch("in_sens", applySens)
 	D.watch("in_invert", applyInvert)
-	for _, k in ipairs({"perf_particles", "perf_textures", "perf_lowgfx"}) do D.watch(k, applyPerf) end
+	for _, k in ipairs({"perf_potato", "potato_quality", "potato_shadows", "potato_materials", "potato_textures", "potato_particles", "potato_effects", "potato_terrain"}) do
+		D.watch(k, function()
+			if k == "perf_potato" or S.perf_potato then applyPotato() end
+		end)
+	end
 	D.on(LP.CharacterAdded, function(ch)
 		ch:WaitForChild("Humanoid", 10)
 		task.wait(0.5)
@@ -7270,7 +7318,7 @@ init(function()
 	applyNameTag()
 	applySens()
 	applyInvert()
-	applyPerf()
+	applyPotato()
 end)
 end
 do
