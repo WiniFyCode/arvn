@@ -46,6 +46,7 @@
 | `Search`, `OpenOnLoad`, `LoadNotification` | `true`, `true`, `true` |
 | `NotifySide`, `MobileButton` | `"Top Right"`, auto |
 | `Dashboard`, `Server`, `Tools` | off |
+| `KeySystem` | none; `{Title, Note, Keys, Check, Link, SaveKey}` |
 | `Groups`, `Pages` | built-in names |
 
 ## Window

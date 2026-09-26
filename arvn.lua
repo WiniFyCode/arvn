@@ -6224,11 +6224,15 @@ function D.openDialog(o)
 	if type(list) ~= "table" or #list == 0 then
 		list = input and {{Name = "Cancel"}, {Name = o.Confirm or "Done", Callback = o.Callback}} or {{Name = "OK", Style = "Primary"}}
 	end
-	local function run(bd)
+	local function run(bd, isPrimary)
 		if closed then return end
 		D.play("click")
 		local value = input and input.Text or nil
-		if input and o.Validate then
+		if bd.Keep then
+			if bd.Callback then task.spawn(bd.Callback, value) end
+			return
+		end
+		if input and o.Validate and isPrimary then
 			local ok, msg = o.Validate(value)
 			if not ok then
 				D.play("error")
@@ -6241,7 +6245,8 @@ function D.openDialog(o)
 	end
 	for i, bd in ipairs(list) do
 		local style = bd.Style or bd.Variant or (i == #list and "Primary" or "Default")
-		if style == "Primary" or bd.Default then d.submit = function() run(bd) end end
+		local isPrimary = style == "Primary" or bd.Default == true
+		if isPrimary then d.submit = function() run(bd, true) end end
 		local primary = style == "Primary"
 		local b = button({Size = UDim2.fromOffset(0, 34), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = primary and D.accent() or T.field, BackgroundTransparency = 0, Text = bd.Name or bd.Title or "OK", TextSize = 13, FontFace = D.F(D.W.semi), TextColor3 = primary and D.onAccentColor() or (style == "Danger" and DANGER or T.label), LayoutOrder = i, Parent = foot})
 		corner(b, M.rField)
@@ -6258,7 +6263,7 @@ function D.openDialog(o)
 		b.MouseLeave:Connect(function() tween(b, 0.16, {BackgroundTransparency = 0}) end)
 		b.MouseButton1Click:Connect(function()
 			D.press(b)
-			run(bd)
+			run(bd, isPrimary)
 		end)
 	end
 
@@ -6270,6 +6275,7 @@ function D.openDialog(o)
 		d.close()
 	end)
 
+	d.dismissable = o.Dismissable ~= false
 	D.activeDialog = d
 	if D.mouseFree then D.mouseFree(true) end
 	D.play("open", 1.15)
@@ -7581,7 +7587,7 @@ D.on(UIS.InputBegan, function(input, gp)
 	if t == Enum.UserInputType.Keyboard then
 		local kc = input.KeyCode
 		if kc == Enum.KeyCode.Escape and D.activeDialog then
-			D.activeDialog.close()
+			if D.activeDialog.dismissable ~= false then D.activeDialog.close() end
 			return
 		end
 		if (kc == Enum.KeyCode.Return or kc == Enum.KeyCode.KeypadEnter) and D.activeDialog and D.activeDialog.submit then
@@ -9626,6 +9632,61 @@ function Window:SetBackground(o)
 	end
 end
 
+local function checkKey(ks, key)
+	key = string.gsub(string.gsub(tostring(key or ""), "^%s+", ""), "%s+$", "")
+	if key == "" then return false end
+	if type(ks.Check) == "function" then
+		local ok, r = pcall(ks.Check, key)
+		return ok and r == true
+	end
+	local keys = ks.Keys or ks.Key
+	if type(keys) == "string" then keys = {keys} end
+	for _, k in ipairs(type(keys) == "table" and keys or {}) do
+		if tostring(k) == key then return true end
+	end
+	return false
+end
+
+local function runKeySystem(ks, done)
+	local path = DIR .. "/key.txt"
+	if ks.SaveKey ~= false and isfile and readfile then
+		local ok, saved = pcall(function() return isfile(path) and readfile(path) end)
+		if ok and type(saved) == "string" and checkKey(ks, saved) then
+			done()
+			return
+		end
+	end
+	for k, v in pairs(D.DEF_OVERRIDES or {}) do S[k] = D.clone(v) end
+	D.applyTheme()
+	D.applyMetrics()
+	local buttons = {}
+	if ks.Link then
+		buttons[#buttons + 1] = {Name = "Get Key", Keep = true, Callback = function()
+			if setclipboard then pcall(setclipboard, tostring(ks.Link)) end
+			D.notify(ks.Title or "Key", "Link copied.", {icon = "copy", dur = 2.5})
+		end}
+	end
+	buttons[#buttons + 1] = {Name = "Continue", Style = "Primary", Callback = function(key)
+		if ks.SaveKey ~= false and writefile then
+			D.ensureDir(DIR)
+			pcall(writefile, path, string.gsub(string.gsub(tostring(key or ""), "^%s+", ""), "%s+$", ""))
+		end
+		done()
+	end}
+	D.openDialog({
+		Title = ks.Title or ((D.CONFIG.Title or "arvn") .. " Key"),
+		Content = ks.Note or ks.Content,
+		Icon = "key-round",
+		Input = {Placeholder = ks.Placeholder or "Enter key"},
+		Dismissable = false,
+		Validate = function(key)
+			if checkKey(ks, key) then return true end
+			return false, ks.Wrong or "That key is not valid."
+		end,
+		Buttons = buttons,
+	})
+end
+
 function API:CreateWindow(o)
 	o = o or {}
 	if D.windowObj then return D.windowObj end
@@ -9742,8 +9803,16 @@ function API:CreateWindow(o)
 	if o.ShowErrors ~= nil then API.ShowErrors = o.ShowErrors end
 	local win = setmetatable({Flags = API.Flags, API = API}, Window)
 	D.windowObj = win
+	cfg.KeySystem = type(o.KeySystem) == "table" and o.KeySystem or nil
 	task.defer(function()
-		if D.alive then D.start() end
+		if not D.alive then return end
+		if cfg.KeySystem then
+			runKeySystem(cfg.KeySystem, function()
+				if D.alive then D.start() end
+			end)
+		else
+			D.start()
+		end
 	end)
 	return win
 end

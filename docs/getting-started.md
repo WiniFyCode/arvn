@@ -128,6 +128,26 @@ Arvn:CreateWindow({
 
 Three optional pages can be turned on: `Dashboard = true`, `Server = true` and `Tools = true`.
 
+## Key system
+
+Ask for a key before the menu opens:
+
+```lua
+Arvn:CreateWindow({
+	Title = "My Script",
+	KeySystem = {
+		Title = "My Script Key",
+		Note = "Get a key from the link.",
+		Keys = {"key-one", "key-two"},
+		Link = "https://example.com/get-key",
+	},
+})
+```
+
+- `Get Key` copies `Link`.
+- A correct key is saved, so the player only enters it once. Set `SaveKey = false` to ask every time.
+- To check keys yourself, use `Check = function(key) return key == "abc" end` instead of `Keys`.
+
 ## Credits
 
 Put your name in `Author`, and anyone else in `Credits`:
