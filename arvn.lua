@@ -1241,7 +1241,8 @@ function D.writeMeta()
 	pcall(writefile, metaPath(), HttpService:JSONEncode(D.META))
 end
 
-function D.snapshot()
+local LAYOUT_KEYS = {"win_w", "win_h", "win_x", "win_y", "wm_x", "wm_y", "kb_x", "kb_y", "ks_x", "ks_y", "ub_x", "ub_y"}
+function D.snapshot(withLayout)
 	local out = {}
 	for k in pairs(DEF) do
 		if not NOSAVE[k] then out[k] = S[k] end
@@ -1252,7 +1253,28 @@ function D.snapshot()
 	end
 	out.__binds = b
 	out.__version = UI.Version
+	if withLayout and D.META then
+		local l = {}
+		for _, k in ipairs(LAYOUT_KEYS) do l[k] = D.META[k] end
+		for k, v in pairs(D.META) do
+			if type(k) == "string" and string.find(k, "^wg_") then l[k] = v end
+		end
+		out.__layout = l
+	end
 	return out
+end
+
+function D.applyLayout(l)
+	if type(l) ~= "table" or not D.META then return end
+	for _, k in ipairs(LAYOUT_KEYS) do D.META[k] = tonumber(l[k]) end
+	for k, v in pairs(l) do
+		if type(k) == "string" and string.find(k, "^wg_") then D.META[k] = tonumber(v) end
+	end
+	D.writeMeta()
+	if D.W_STATE and D.W_STATE.win and D.META.win_x and D.META.win_y then
+		D.W_STATE.target = Vector2.new(D.META.win_x, D.META.win_y)
+	end
+	if D.requestRebuild and D.W_STATE and D.W_STATE.win then D.requestRebuild() end
 end
 
 validKey = function(k, v)
@@ -1274,6 +1296,13 @@ function D.applySnapshot(data)
 	D.bulk = false
 	D.fire("ui_theme")
 	if type(data.__binds) == "table" then
+		for f in pairs(BIND) do
+			if data.__binds[f] == nil and not string.find(f, "^__") then
+				local d = DEF_BIND[f]
+				if d then BIND[f] = {key = d.key, mode = d.mode, list = d.list} else BIND[f] = nil end
+				D.fire("__bind:" .. f)
+			end
+		end
 		for f, x in pairs(data.__binds) do
 			if type(x) == "table" and type(x[1]) == "string" then
 				BIND[f] = {key = x[1], mode = table.find(D.MODES, x[2]) and x[2] or "Toggle", list = x[3] ~= false}
@@ -1316,7 +1345,7 @@ function D.saveConfig(name)
 	D.ensureDir(DIR)
 	D.ensureDir(DIR .. "/configs")
 	D.ensureDir(cfgDir())
-	local snap = D.snapshot()
+	local snap = D.snapshot(true)
 	snap.__saved = os.time()
 	return pcall(writefile, cfgDir() .. "/" .. name .. ".json", HttpService:JSONEncode(snap))
 end
@@ -1334,7 +1363,10 @@ end
 function D.loadConfig(name)
 	local data = D.readConfig(name)
 	if not data then return false end
-	return D.applySnapshot(data)
+	local ok = D.applySnapshot(data)
+	if ok and data.__layout then D.applyLayout(data.__layout) end
+	if ok and D.syncImages then D.syncImages() end
+	return ok
 end
 
 function D.deleteConfig(name)
@@ -1353,7 +1385,9 @@ function D.importCode(raw)
 	local json = payload and D.b64decode(payload) or raw
 	local ok, data = pcall(function() return HttpService:JSONDecode(json) end)
 	if not ok or type(data) ~= "table" then return false end
-	return D.applySnapshot(data)
+	local applied = D.applySnapshot(data)
+	if applied and D.syncImages then D.syncImages() end
+	return applied
 end
 
 function D.writeAutosave()
@@ -1374,6 +1408,7 @@ end
 task.spawn(function()
 	while D.alive do
 		task.wait(0.4)
+		if not D.alive then break end
 		if dirty and os.clock() - lastChange > 0.9 then
 			dirty = false
 			D.writeAutosave()
@@ -7431,6 +7466,44 @@ end
 
 D.LIB_LINK = "https://github.com/koteqjjjj/arvn"
 A.act_lib_link = function() copy(D.LIB_LINK, "arvn lib link copied") end
+local syncing = false
+function D.syncImages()
+	if syncing then return end
+	syncing = true
+	task.spawn(function()
+		pcall(function()
+			local url = tostring(S.bg_url or "")
+			if S.bg_on and url ~= "" and url ~= D.META.bg_src_url then
+				local asset = D.fetchImage(url, "background")
+				if asset then
+					D.bgAsset = asset
+					D.META.bg_src_url = url
+					D.writeMeta()
+					D.applyBackground()
+				end
+			end
+			local purl = tostring(S.pfp_url or "")
+			if purl ~= "" and purl ~= D.META.pfp_src_url then
+				local asset = D.fetchImage(purl, "avatar")
+				if asset then
+					D.customAvatar = asset
+					D.META.avatar = true
+					D.META.pfp_src_url = purl
+					D.writeMeta()
+					D.requestRebuild()
+				end
+			elseif purl == "" and D.META.pfp_src_url then
+				D.customAvatar = nil
+				D.META.avatar = nil
+				D.META.pfp_src_url = nil
+				D.writeMeta()
+				D.requestRebuild()
+			end
+		end)
+		syncing = false
+	end)
+end
+
 D.RESET_HOOKS = D.RESET_HOOKS or {}
 function D.resetEverything()
 	for _, fn in ipairs(D.RESET_HOOKS) do
@@ -7548,6 +7621,7 @@ A.act_pfp_load = function()
 	end
 	D.customAvatar = asset
 	D.META.avatar = true
+	D.META.pfp_src_url = url
 	D.writeMeta()
 	D.requestRebuild()
 	D.notify("Profile picture", "Updated.", {icon = "image"})
@@ -7556,6 +7630,7 @@ A.act_pfp_reset = function()
 	D.customAvatar = nil
 	D.META.avatar = nil
 	D.META.avatar_file = nil
+	D.META.pfp_src_url = nil
 	D.writeMeta()
 	set("pfp_url", "")
 	D.requestRebuild()
@@ -7574,6 +7649,8 @@ A.act_bg_load = function()
 		return
 	end
 	D.bgAsset = asset
+	D.META.bg_src_url = url
+	D.writeMeta()
 	set("bg_on", true)
 	D.applyBackground()
 	D.notify("Background", "Applied to the window.", {icon = "wallpaper"})
@@ -7941,10 +8018,29 @@ UI.Unload = function()
 	pcall(D.hideTip)
 	setUnlock(false)
 	D.menuOpen = false
+	local settingFlags = {}
+	local function collect(rows)
+		for _, r in ipairs(rows) do
+			if r.id then settingFlags[r.id] = true end
+			if r.color then settingFlags[r.colorId or (tostring(r.id) .. "_color")] = true end
+			if r.sub then
+				for _, card in ipairs(r.sub.cards) do collect(card) end
+			end
+		end
+	end
+	for _, c in ipairs(D.BUILTIN.settings.children or {}) do
+		for _, col in ipairs(c.page or {}) do
+			for _, sec in ipairs(col) do
+				if type(sec) == "table" and sec.rows then collect(sec.rows) end
+			end
+		end
+	end
 	for k, v in pairs(D.DEF) do
 		if type(v) == "boolean" and S[k] == true then
-			S[k] = false
-			pcall(D.fire, k)
+			if not settingFlags[k] and not string.find(k, "^__") then
+				S[k] = false
+				pcall(D.fire, k)
+			end
 		end
 	end
 	for f in pairs(D.BIND) do D.BIND[f] = nil end
@@ -8088,6 +8184,7 @@ function D.start()
 	for _, k in ipairs({"bg_on", "bg_opacity", "bg_dark", "bg_fit"}) do D.watch(k, D.applyBackground) end
 	for _, k in ipairs({"prof_name", "prof_tag"}) do D.watch(k, function() D.refreshOverlays() end) end
 	D.watch("cfg_autosave", function(v)
+		if not D.alive then return end
 		D.META.autosave = v
 		D.writeMeta()
 	end)
@@ -8129,6 +8226,7 @@ function D.start()
 	end
 	D.watch("__binds", function() D.refreshKeybinds() end)
 	D.watch("cfg_autoload", function(v)
+		if not D.alive then return end
 		D.META.autoload = v
 		D.writeMeta()
 	end)

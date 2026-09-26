@@ -89,6 +89,19 @@ speed:Set(true)
 
 Setting a value updates the menu and runs the callback.
 
+## Saving
+
+Everything saves by itself, with no code needed:
+
+- the value of every element, including elements inside option menus and pages
+- keybinds and their modes
+- colors, the theme and every setting
+- the window size and position, and where the overlays are
+
+Players can also save named configs in Settings > Configs and share a setup as a code. Share codes carry the settings but not the layout, because other players have other screens.
+
+To keep an element out of saves, give it `Save = false`.
+
 ## Change the game safely
 
 Use `Patch` to change a property. It remembers the original value and puts it back when you call `Restore` or when the menu is ejected.
