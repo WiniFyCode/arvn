@@ -38,7 +38,7 @@ genv.arvn = UI
 local D = {alive = true, conns = {}, cleanups = {}, started = os.clock()}
 local S = UI.Flags
 local T = {}
-local M = {}
+local M = {row = 40, nav = 36, navSub = 33, gap = 16, title = 30, rWin = 14, rCard = 10, rField = 7, rPop = 12, rChip = 6, text = 14}
 local DIR = "arvn"
 
 function D.on(signal, fn)
@@ -5871,7 +5871,7 @@ end
 local function glassCard(props, factor)
 	props.BackgroundColor3 = T.win
 	local f = frame(props)
-	corner(f, M.rCard + 1)
+	corner(f, (M.rCard or 10) + 1)
 	stroke(f, 0.76, true)
 	D.onGlass(f, factor or 0.35)
 	return f
@@ -6214,7 +6214,7 @@ function D.notify(title, body, opts)
 	local dur = opts.dur or S.nt_dur or 4
 	local slot = frame({Size = UDim2.fromOffset(compact and 0 or 300, 0), AutomaticSize = compact and Enum.AutomaticSize.XY or Enum.AutomaticSize.Y, BackgroundTransparency = 1, LayoutOrder = top and -counter or counter, Parent = stack})
 	local card = new("CanvasGroup", {Size = UDim2.fromOffset(compact and 0 or 300, 0), AutomaticSize = compact and Enum.AutomaticSize.XY or Enum.AutomaticSize.Y, BackgroundColor3 = T.win, GroupTransparency = 1, Parent = slot})
-	corner(card, compact and 18 or M.rCard + 1)
+	corner(card, compact and 18 or (M.rCard or 10) + 1)
 	stroke(card, 0.74, true)
 	D.onGlass(card, 0.25)
 	local inner = frame({Size = UDim2.fromOffset(compact and 0 or 300, 0), AutomaticSize = compact and Enum.AutomaticSize.XY or Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = card})
