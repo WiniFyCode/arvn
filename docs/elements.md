@@ -146,8 +146,12 @@ Section:Dropdown({Name = "Parts", Values = {"Head", "Torso", "Legs"}, Multi = tr
 | `ExcludeSelf` | with `Special = "Players"`, `false` also lists you |
 | `Placeholder` | text shown while nothing is picked |
 | `Width` | width of the box in pixels |
+| `ListWidth` | minimum width of the dropdown popup list |
+| `Search` | `false` hides the search filter box (enabled by default) |
+| `SearchPlaceholder` | placeholder text for the search box (defaults to `"Search..."`) |
+| `SelectAll` | `false` hides the Select All / Deselect All toolbar in multi-choice dropdowns |
 
-Long lists get a search box.
+Dropdowns include a built-in search box. Multi-choice dropdowns also include quick **Select All** and **Deselect All** buttons.
 
 ```lua
 local target = Section:Dropdown({Name = "Player", Special = "Players"})
@@ -155,13 +159,15 @@ local material = Section:Dropdown({Name = "Material", Values = Enum.Material, De
 local shops = Section:Dropdown({Name = "Shop", Values = workspace.Shops})
 ```
 
-Change the list later:
+Change the list or selection later:
 
 ```lua
 shops:SetValues({"One", "Two"})
 shops:AddValues({"Three"})
 shops:RemoveValues({"One"})
 shops:SetValues({"Only"}, false)
+parts:SelectAll()
+parts:DeselectAll()
 ```
 
 `SetValues(list, false)` also clears the picked value if it isn't in the new list.

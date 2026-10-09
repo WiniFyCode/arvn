@@ -161,7 +161,7 @@ Options and methods for each element are in [Elements](elements.md).
 | `AddButton({Icon, Tooltip, Callback})` | every row element |
 | `Toggle`, `SetKey(key, mode)`, `GetKey`, `AddKeybind(key)`, `AddColor(color)` | Toggle |
 | `SetMin`, `SetMax`, `SetRange(min, max)`, `SetStep`, `SetSuffix` | Slider |
-| `SetValues(list, keep)`, `AddValues(list)`, `RemoveValues(list)` | Dropdown, Segmented |
+| `SetValues(list, keep)`, `AddValues(list)`, `RemoveValues(list)`, `SelectAll()`, `DeselectAll()` | Dropdown, Segmented |
 | `GetColor()` | ColorPicker, and the `Color` of a toggle |
 | `Press()` | Button |
 | `OnClick(fn)` | Button, Keybind |

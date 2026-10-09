@@ -2786,20 +2786,20 @@ local tween, set = D.tween, D.set
 
 function D.openList(anchor, spec, level, onClose)
 	local opts = type(spec.opts) == "function" and spec.opts() or spec.opts
-	local w = math.max(math.floor(anchor.AbsoluteSize.X / math.max(D.uiScale(), 0.01) + 0.5), spec.listWidth or 190)
+	local minWidth = spec.listWidth or (spec.multi and 210 or 190)
+	local w = math.max(math.floor(anchor.AbsoluteSize.X / math.max(D.uiScale(), 0.01) + 0.5), minWidth)
 	local fontPreview = spec.fontPreview or (spec.id and (string.find(spec.id, "font") ~= nil))
 	D.openPop(level, anchor, {width = w, place = "below", pad = 5, gap = 4, onClose = onClose}, function(body, scope)
 		local filter = ""
 		local searchBox
-		if #opts > 10 then
+		local showSearch = spec.search ~= false and #opts > 0
+		if showSearch then
 			local sb = frame({Size = UDim2.new(1, 0, 0, 30), BackgroundColor3 = T.field, LayoutOrder = 1, Parent = body})
 			corner(sb, M.rField)
 			icon("search", 13, T.dim, {AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 9, 0.5, 0), Parent = sb})
-			searchBox = new("TextBox", {Position = UDim2.fromOffset(28, 0), Size = UDim2.new(1, -34, 1, 0), BackgroundTransparency = 1, Text = "", PlaceholderText = "Filter...", PlaceholderColor3 = T.dim, TextColor3 = T.label, FontFace = D.F(D.W.med), TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, ClearTextOnFocus = false, Parent = sb})
+			searchBox = new("TextBox", {Position = UDim2.fromOffset(28, 0), Size = UDim2.new(1, -34, 1, 0), BackgroundTransparency = 1, Text = "", PlaceholderText = spec.searchPlaceholder or "Search...", PlaceholderColor3 = T.dim, TextColor3 = T.label, FontFace = D.F(D.W.med), TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, ClearTextOnFocus = false, Parent = sb})
 		end
-		local shown = math.min(#opts, 8)
-		local list = new("ScrollingFrame", {Size = UDim2.new(1, 0, 0, math.max(shown, 1) * 30), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = #opts > shown and 3 or 0, ScrollBarImageColor3 = T.ink, ScrollBarImageTransparency = 0.8, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollingDirection = Enum.ScrollingDirection.Y, LayoutOrder = 2, Parent = body})
-		vlist(list, 0)
+
 		local items = {}
 		local function isSel(o)
 			if spec.multi then return type(S[spec.id]) == "table" and table.find(S[spec.id], o) ~= nil end
@@ -2812,6 +2812,59 @@ function D.openList(anchor, spec, level, onClose)
 				it.c.Visible = sel
 			end
 		end
+
+		local actions
+		if spec.multi and spec.selectAll ~= false and #opts > 0 then
+			actions = frame({Size = UDim2.new(1, 0, 0, 24), BackgroundTransparency = 1, LayoutOrder = 2, Parent = body})
+			hlist(actions, 4)
+
+			local btnSelectAll = button({Size = UDim2.new(0.5, -2, 1, 0), BackgroundColor3 = T.field, BackgroundTransparency = 0, Text = "Select All", TextSize = 11, TextColor3 = T.label, LayoutOrder = 1, Parent = actions})
+			corner(btnSelectAll, M.rChip)
+			stroke(btnSelectAll, 0.92)
+			D.hoverFade(btnSelectAll, "BackgroundColor3", T.field, T.hover)
+
+			local btnDeselectAll = button({Size = UDim2.new(0.5, -2, 1, 0), BackgroundColor3 = T.field, BackgroundTransparency = 0, Text = "Deselect All", TextSize = 11, TextColor3 = T.label, LayoutOrder = 2, Parent = actions})
+			corner(btnDeselectAll, M.rChip)
+			stroke(btnDeselectAll, 0.92)
+			D.hoverFade(btnDeselectAll, "BackgroundColor3", T.field, T.hover)
+
+			btnSelectAll.MouseButton1Click:Connect(function()
+				D.play("click")
+				local cur = type(S[spec.id]) == "table" and table.clone(S[spec.id]) or {}
+				for _, it in ipairs(items) do
+					if filter == "" or string.find(string.lower(tostring(it.o)), filter, 1, true) ~= nil then
+						if not table.find(cur, it.o) then
+							cur[#cur + 1] = it.o
+						end
+					end
+				end
+				table.sort(cur, function(a, bb) return (table.find(opts, a) or 0) < (table.find(opts, bb) or 0) end)
+				set(spec.id, cur)
+				draw()
+			end)
+
+			btnDeselectAll.MouseButton1Click:Connect(function()
+				D.play("click")
+				local cur = type(S[spec.id]) == "table" and table.clone(S[spec.id]) or {}
+				if filter == "" then
+					cur = {}
+				else
+					for _, it in ipairs(items) do
+						if string.find(string.lower(tostring(it.o)), filter, 1, true) ~= nil then
+							local idx = table.find(cur, it.o)
+							if idx then table.remove(cur, idx) end
+						end
+					end
+				end
+				set(spec.id, cur)
+				draw()
+			end)
+		end
+
+		local shown = math.min(#opts, 8)
+		local list = new("ScrollingFrame", {Size = UDim2.new(1, 0, 0, math.max(shown, 1) * 30), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = #opts > shown and 3 or 0, ScrollBarImageColor3 = T.ink, ScrollBarImageTransparency = 0.8, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollingDirection = Enum.ScrollingDirection.Y, LayoutOrder = 3, Parent = body})
+		vlist(list, 0)
+
 		for i, o in ipairs(opts) do
 			local b = button({Size = UDim2.new(1, 0, 0, 30), BackgroundColor3 = T.ink, BackgroundTransparency = 1, LayoutOrder = i, Parent = list})
 			corner(b, math.max(3, M.rField - 1))
@@ -2849,6 +2902,7 @@ function D.openList(anchor, spec, level, onClose)
 		if #opts == 0 then
 			text({Text = "No options", Size = UDim2.new(1, 0, 0, 30), TextSize = 13, TextColor3 = T.dim, TextXAlignment = Enum.TextXAlignment.Center, Parent = list})
 		end
+		local noResults = text({Text = "No results", Size = UDim2.new(1, 0, 0, 30), TextSize = 13, TextColor3 = T.dim, TextXAlignment = Enum.TextXAlignment.Center, Visible = false, LayoutOrder = 999999, Parent = list})
 		if searchBox then
 			searchBox:GetPropertyChangedSignal("Text"):Connect(function()
 				filter = string.lower(searchBox.Text)
@@ -2859,6 +2913,7 @@ function D.openList(anchor, spec, level, onClose)
 					if vis then n += 1 end
 				end
 				list.Size = UDim2.new(1, 0, 0, math.max(math.min(n, 8), 1) * 30)
+				noResults.Visible = (filter ~= "" and n == 0)
 			end)
 		end
 		draw()
@@ -8875,6 +8930,21 @@ function Element:RemoveValues(list)
 	if self.Kind == "segment" then rebuild() end
 	return self
 end
+function Element:SelectAll()
+	if self.Row and self.Row.multi and self.Row.opts then
+		local opts = type(self.Row.opts) == "function" and self.Row.opts() or self.Row.opts
+		local nv = table.clone(opts)
+		D.set(self.Flag, nv)
+	end
+	return self
+end
+function Element:DeselectAll()
+	if self.Row and self.Row.multi then
+		D.set(self.Flag, {})
+	end
+	return self
+end
+Element.Clear = Element.DeselectAll
 function Element:SetKey(key, mode)
 	local b = D.getBind(self.Flag)
 	b.key = key or "None"
@@ -9078,7 +9148,7 @@ function Container:Dropdown(a, b)
 	else
 		list = resolveValues(o.Values or o.Options)
 	end
-	local row = common({t = "dropdown", label = name, opts = list, multi = o.Multi == true, width = o.Width, fontPreview = o.FontPreview, preview = o.SoundPreview, placeholder = o.Placeholder}, o)
+	local row = common({t = "dropdown", label = name, opts = list, multi = o.Multi == true, width = o.Width, listWidth = o.ListWidth, fontPreview = o.FontPreview, preview = o.SoundPreview, placeholder = o.Placeholder, search = o.Search ~= nil and o.Search or (o.Searchable ~= nil and o.Searchable or nil), searchPlaceholder = o.SearchPlaceholder, selectAll = o.SelectAll}, o)
 	row.id = autoId(self, "dropdown", name, o.Flag)
 	local def = o.Default
 	if type(def) == "number" and not row.multi and list[def] ~= nil and not table.find(list, def) then def = list[def] end
